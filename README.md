@@ -32,5 +32,35 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Langkah cepat deploy
 
+1. Buat akun di https://vercel.com dan login.
+2. Klik **New Project** dan pilih repository GitHub yang berisi project ini atau gunakan **Import**.
+3. Pastikan framework terdeteksi sebagai **Next.js**.
+4. Tambahkan environment variables di Vercel Dashboard (lihat `.env.example`).
+5. Klik **Deploy**.
+
+### Environment variables yang dibutuhkan
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `TELEGRAM_BOT_TOKEN`
+- `CRON_SECRET`
+- `COINGECKO_API_KEY` (opsional jika ingin price update)
+- `NEXT_PUBLIC_MC_SPREAD_IDR` (opsional, default `2000`)
+- `NEXT_PUBLIC_PRICE_LOCK_MS` (opsional, default `60000`)
+- `NEXT_PUBLIC_MAX_ACTIVE_ASSETS` (opsional, default `5`)
+
+> Untuk development lokal, copy `.env.example` menjadi `.env.local` dan isi nilai yang sesuai.
+
+### Deploy via Vercel CLI
+
+Jika ingin deploy lewat terminal:
+
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
