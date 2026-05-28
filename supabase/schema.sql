@@ -69,6 +69,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_users_updated_at ON public.users;
 CREATE TRIGGER trg_users_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -82,23 +83,30 @@ CREATE TRIGGER trg_users_updated_at
 CREATE TABLE IF NOT EXISTS public.prices (
   id                UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  -- Kurs pasar mentah dari CoinGecko
-  ton_idr_market    NUMERIC(18,2) NOT NULL,
+  -- Asset / Coin identifier dari CoinGecko
+  asset_id          TEXT          NOT NULL DEFAULT 'the-open-network',
+  currency          TEXT          NOT NULL DEFAULT 'idr',
 
-  -- Harga jual Admin (user deposit TON -> IDR): market + spread
-  -- Spread flat = Rp 2.000/TON  =>  Beli TON: Rp 81.000
-  ton_idr_buy       NUMERIC(18,2) NOT NULL,  -- harga beli TON (user beli dari admin)
+  -- Kurs pasar mentah dari CoinGecko (generic)
+  ton_market        NUMERIC(18,2),
 
-  -- Harga beli Admin (user withdraw TON -> IDR): market - spread
-  -- Jual TON: Rp 79.000
-  ton_idr_sell      NUMERIC(18,2) NOT NULL,  -- harga jual TON (user jual ke admin)
+  -- Harga jual Admin: market + spread
+  ton_buy           NUMERIC(18,2),
 
-  -- Metadata sumber
+  -- Harga beli Admin: market - spread
+  ton_sell          NUMERIC(18,2),
+
+  -- Harga spesifik IDR untuk kompatibilitas lama
+  ton_idr_market    NUMERIC(18,2),
+  ton_idr_buy       NUMERIC(18,2),
+  ton_idr_sell      NUMERIC(18,2),
+
+  spread_amount     NUMERIC(18,2),
   source            TEXT          NOT NULL DEFAULT 'coingecko',
   fetched_at        TIMESTAMPTZ   NOT NULL DEFAULT now(),
 
   -- Price lock: kurs dikunci selama 60 detik di UI sebelum diperbarui
-  locked_until      TIMESTAMPTZ   GENERATED ALWAYS AS (fetched_at + INTERVAL '60 seconds') STORED
+  locked_until      TIMESTAMPTZ   NOT NULL DEFAULT (now() + INTERVAL '60 seconds')
 );
 
 -- Hanya simpan 1 baris harga aktif + histori untuk audit
@@ -106,8 +114,23 @@ CREATE INDEX IF NOT EXISTS idx_prices_fetched_at ON public.prices (fetched_at DE
 
 -- Row Level Security: semua user hanya bisa SELECT
 ALTER TABLE public.prices ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "prices_select_all" ON public.prices;
 CREATE POLICY "prices_select_all" ON public.prices
   FOR SELECT USING (true);
+
+-- Upgrade existing schema if the table already exists
+ALTER TABLE IF EXISTS public.prices
+  ADD COLUMN IF NOT EXISTS asset_id          TEXT          NOT NULL DEFAULT 'the-open-network',
+  ADD COLUMN IF NOT EXISTS currency          TEXT          NOT NULL DEFAULT 'idr',
+  ADD COLUMN IF NOT EXISTS ton_market        NUMERIC(18,2),
+  ADD COLUMN IF NOT EXISTS ton_buy           NUMERIC(18,2),
+  ADD COLUMN IF NOT EXISTS ton_sell          NUMERIC(18,2),
+  ADD COLUMN IF NOT EXISTS spread_amount     NUMERIC(18,2);
+
+ALTER TABLE IF EXISTS public.prices
+  ALTER COLUMN ton_idr_market DROP NOT NULL,
+  ALTER COLUMN ton_idr_buy DROP NOT NULL,
+  ALTER COLUMN ton_idr_sell DROP NOT NULL;
 
 -- =================================================================
 -- TABEL: assets
@@ -165,6 +188,7 @@ CREATE INDEX IF NOT EXISTS idx_assets_owner_id ON public.assets (owner_id);
 CREATE INDEX IF NOT EXISTS idx_assets_status   ON public.assets (status);
 CREATE INDEX IF NOT EXISTS idx_assets_stage    ON public.assets (stage);
 
+DROP TRIGGER IF EXISTS trg_assets_updated_at ON public.assets;
 CREATE TRIGGER trg_assets_updated_at
   BEFORE UPDATE ON public.assets
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -226,6 +250,7 @@ CREATE INDEX IF NOT EXISTS idx_tickets_status     ON public.tickets (status);
 CREATE INDEX IF NOT EXISTS idx_tickets_session_id ON public.tickets (session_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_stage      ON public.tickets (stage);
 
+DROP TRIGGER IF EXISTS trg_tickets_updated_at ON public.tickets;
 CREATE TRIGGER trg_tickets_updated_at
   BEFORE UPDATE ON public.tickets
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -315,6 +340,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_status     ON public.transactions (s
 CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON public.transactions (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_tx_hash    ON public.transactions (tx_hash);
 
+DROP TRIGGER IF EXISTS trg_transactions_updated_at ON public.transactions;
 CREATE TRIGGER trg_transactions_updated_at
   BEFORE UPDATE ON public.transactions
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -374,6 +400,7 @@ CREATE TABLE IF NOT EXISTS public.sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_stage  ON public.sessions (stage);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON public.sessions (status);
 
+DROP TRIGGER IF EXISTS trg_sessions_updated_at ON public.sessions;
 CREATE TRIGGER trg_sessions_updated_at
   BEFORE UPDATE ON public.sessions
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -587,9 +614,11 @@ $$;
 -- Users: user hanya bisa lihat & edit data dirinya sendiri
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "users_select_own" ON public.users;
 CREATE POLICY "users_select_own" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "users_update_own" ON public.users;
 CREATE POLICY "users_update_own" ON public.users
   FOR UPDATE USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
@@ -597,27 +626,32 @@ CREATE POLICY "users_update_own" ON public.users
 -- Assets: user hanya bisa lihat aset miliknya, listing bursa bisa dilihat semua
 ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "assets_select_own" ON public.assets;
 CREATE POLICY "assets_select_own" ON public.assets
   FOR SELECT USING (
     owner_id = auth.uid()
     OR status = 'listed'    -- Aset yang terdaftar di bursa bisa dilihat semua user
   );
 
+DROP POLICY IF EXISTS "assets_update_own" ON public.assets;
 CREATE POLICY "assets_update_own" ON public.assets
   FOR UPDATE USING (owner_id = auth.uid());
 
 -- Tickets: user hanya bisa lihat tiket miliknya
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tickets_select_own" ON public.tickets;
 CREATE POLICY "tickets_select_own" ON public.tickets
   FOR SELECT USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "tickets_insert_own" ON public.tickets;
 CREATE POLICY "tickets_insert_own" ON public.tickets
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
 -- Transactions: user hanya bisa lihat transaksi yang melibatkan dirinya
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "transactions_select_own" ON public.transactions;
 CREATE POLICY "transactions_select_own" ON public.transactions
   FOR SELECT USING (
     from_user_id = auth.uid()
@@ -627,12 +661,14 @@ CREATE POLICY "transactions_select_own" ON public.transactions
 -- Sessions: semua user bisa lihat info sesi (jadwal bursa)
 ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "sessions_select_all" ON public.sessions;
 CREATE POLICY "sessions_select_all" ON public.sessions
   FOR SELECT USING (true);
 
 -- Reserve Fund: hanya admin yang bisa akses langsung
 ALTER TABLE public.reserve_fund ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "reserve_fund_admin_only" ON public.reserve_fund;
 CREATE POLICY "reserve_fund_admin_only" ON public.reserve_fund
   FOR ALL USING (
     EXISTS (
@@ -640,3 +676,8 @@ CREATE POLICY "reserve_fund_admin_only" ON public.reserve_fund
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- Grant table-level privileges so Supabase roles can access tables created via SQL.
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO anon;

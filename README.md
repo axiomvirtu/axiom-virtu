@@ -48,11 +48,47 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 - `TELEGRAM_BOT_TOKEN`
 - `CRON_SECRET`
 - `COINGECKO_API_KEY` (opsional jika ingin price update)
+- `COINGECKO_ASSET_ID` (opsional, default `the-open-network`)
+- `COINGECKO_CURRENCY` (opsional, default `idr`)
+- `MC_SPREAD` (opsional, default `2000`)
 - `NEXT_PUBLIC_MC_SPREAD_IDR` (opsional, default `2000`)
 - `NEXT_PUBLIC_PRICE_LOCK_MS` (opsional, default `60000`)
 - `NEXT_PUBLIC_MAX_ACTIVE_ASSETS` (opsional, default `5`)
 
 > Untuk development lokal, copy `.env.example` menjadi `.env.local` dan isi nilai yang sesuai.
+
+## Setup Database
+
+1. Buka Supabase Project kamu.
+2. Pilih menu `SQL editor`.
+3. Paste seluruh isi `supabase/schema.sql` dan jalankan.
+4. Verifikasi tabel penting telah dibuat:
+   - `public.users`
+   - `public.prices`
+   - `public.assets`
+   - `public.tickets`
+   - `public.transactions`
+   - `public.reserve_fund`
+   - `public.sessions`
+5. Jika ingin menambahkan sample data harga awal, jalankan `supabase/seed.sql`.
+
+### Cron / price update
+
+- Endpoint cron: `GET https://<your-domain>/api/prices/update`
+- Header yang dibutuhkan:
+  - `Authorization: Bearer <CRON_SECRET>`
+- Contoh jika `CRON_SECRET=axiom-virtu-040698`:
+  - `Authorization: Bearer axiom-virtu-040698`
+- Query params opsional untuk dukung internasionalisasi:
+  - `asset` = CoinGecko asset id (default `the-open-network`)
+  - `currency` = fiat currency (default `idr`)
+  - `spread` = spread amount dalam mata uang yang dipilih (default `MC_SPREAD`)
+- Contoh endpoint global:
+  - `GET https://<your-domain>/api/prices/update?currency=usd`
+  - `GET https://<your-domain>/api/prices/update?asset=bitcoin&currency=usd`
+- Jalankan cron job setiap 1 menit atau sesuai kebutuhan.
+
+> Pastikan `SUPABASE_SERVICE_ROLE_KEY` tersedia pada runtime saat menjalankan server Next.js sehingga endpoint harga dapat menulis ke Supabase.
 
 ### Deploy via Vercel CLI
 

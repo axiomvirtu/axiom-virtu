@@ -90,9 +90,15 @@ export interface TicketRow {
 
 export interface PriceRow {
   id:             string
-  ton_idr_market: string
-  ton_idr_buy:    string
-  ton_idr_sell:   string
+  asset_id:       string
+  currency:       string
+  ton_market:     string | null
+  ton_buy:        string | null
+  ton_sell:       string | null
+  spread_amount:  string | null
+  ton_idr_market: string | null
+  ton_idr_buy:    string | null
+  ton_idr_sell:   string | null
   source:         string
   fetched_at:     string
   locked_until:   string   // Generated column

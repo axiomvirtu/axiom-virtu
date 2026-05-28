@@ -16,11 +16,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
-const COINGECKO_API_URL =
-  'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=idr'
-
-const SPREAD_IDR = Number(process.env.NEXT_PUBLIC_MC_SPREAD_IDR ?? 2000)
+const DEFAULT_COINGECKO_ASSET_ID = process.env.COINGECKO_ASSET_ID ?? 'the-open-network'
+const DEFAULT_COINGECKO_CURRENCY = process.env.COINGECKO_CURRENCY ?? 'idr'
+const DEFAULT_MC_SPREAD = Number(process.env.MC_SPREAD ?? process.env.NEXT_PUBLIC_MC_SPREAD_IDR ?? 2000)
 const CRON_SECRET = process.env.CRON_SECRET ?? ''
+
+function getQuoteUrl(assetId: string, currency: string) {
+  const params = new URLSearchParams({
+    ids: assetId,
+    vs_currencies: currency,
+  })
+  return `https://api.coingecko.com/api/v3/simple/price?${params.toString()}`
+}
 
 export async function GET(req: NextRequest) {
   // ── 1. Verifikasi cron secret ───────────────────────────────
@@ -29,9 +36,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const assetId = req.nextUrl.searchParams.get('asset') ?? DEFAULT_COINGECKO_ASSET_ID
+  const currency = req.nextUrl.searchParams.get('currency') ?? DEFAULT_COINGECKO_CURRENCY
+  const spread = Number(req.nextUrl.searchParams.get('spread') ?? DEFAULT_MC_SPREAD)
+
   try {
     // ── 2. Fetch harga dari CoinGecko ───────────────────────────
-    const cgRes = await fetch(COINGECKO_API_URL, {
+    const cgRes = await fetch(getQuoteUrl(assetId, currency), {
       headers: {
         'x-cg-demo-api-key': process.env.COINGECKO_API_KEY ?? '',
         'Accept':            'application/json',
@@ -44,31 +55,37 @@ export async function GET(req: NextRequest) {
       throw new Error(`CoinGecko error: ${cgRes.status} ${cgRes.statusText}`)
     }
 
-    const cgData = await cgRes.json() as {
-      'the-open-network': { idr: number }
-    }
-
-    const marketPrice = cgData['the-open-network']?.idr
+    const cgData = await cgRes.json() as Record<string, Record<string, number>>
+    const marketPrice = cgData[assetId]?.[currency]
     if (!marketPrice || typeof marketPrice !== 'number') {
       throw new Error('Format respons CoinGecko tidak valid')
     }
 
     // ── 3. Hitung harga dengan spread flat ─────────────────────
-    // Beli TON (user beli dari admin): market + spread = Rp81.000
-    // Jual TON (user jual ke admin):   market - spread = Rp79.000
-    const buyPrice  = marketPrice + SPREAD_IDR
-    const sellPrice = marketPrice - SPREAD_IDR
+    const buyPrice  = marketPrice + spread
+    const sellPrice = marketPrice - spread
 
     // ── 4. Insert ke tabel prices ───────────────────────────────
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[Prices/Update] Missing SUPABASE_SERVICE_ROLE_KEY in runtime env')
+      throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY in runtime env')
+    }
+
     const supabase = (await createAdminClient()) as any
 
     const { error: insertError } = await supabase
       .from('prices')
       .insert({
-        ton_idr_market: marketPrice.toString(),
-        ton_idr_buy:    buyPrice.toString(),
-        ton_idr_sell:   sellPrice.toString(),
+        asset_id:       assetId,
+        currency,
+        ton_market:     marketPrice.toString(),
+        ton_buy:        buyPrice.toString(),
+        ton_sell:       sellPrice.toString(),
+        spread_amount:  spread.toString(),
         source:         'coingecko',
+        ton_idr_market: currency === 'idr' ? marketPrice.toString() : null,
+        ton_idr_buy:    currency === 'idr' ? buyPrice.toString() : null,
+        ton_idr_sell:   currency === 'idr' ? sellPrice.toString() : null,
       })
 
     if (insertError) {
@@ -84,9 +101,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       ok:         true,
+      asset:      assetId,
+      currency,
       market:     marketPrice,
       buy:        buyPrice,
       sell:       sellPrice,
+      spread,
       fetched_at: new Date().toISOString(),
     })
   } catch (err) {

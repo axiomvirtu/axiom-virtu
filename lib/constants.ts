@@ -95,12 +95,19 @@ export function formatTon(value: number | string, decimals = 4): string {
 }
 
 /**
+ * Format nilai fiat berdasarkan kode mata uang.
+ */
+export function formatCurrency(value: number, currency = 'IDR', locale?: string): string {
+  return new Intl.NumberFormat(locale ?? 'en-US', {
+    style:    'currency',
+    currency,
+    maximumFractionDigits: currency === 'IDR' ? 0 : 2,
+  }).format(value)
+}
+
+/**
  * Format nilai IDR sebagai Rupiah.
  */
 export function formatIDR(value: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style:    'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return formatCurrency(value, 'IDR', 'id-ID')
 }
