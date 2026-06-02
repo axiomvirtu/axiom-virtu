@@ -19,7 +19,8 @@ export function useTonConnect(): UseTonConnectReturn {
 
   const tonConnect = useMemo(() => {
     if (typeof window === 'undefined') return null
-    return new TonConnect()
+    const manifestUrl = `${window.location.origin}/tonconnect-manifest.json`
+    return new TonConnect({ manifestUrl })
   }, [])
 
   useEffect(() => {
