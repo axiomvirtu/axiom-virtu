@@ -2,33 +2,40 @@
  * app/auth/page.tsx
  *
  * Halaman autentikasi — landing page saat user belum login.
- * Menangani upsert user ke Supabase menggunakan data dari Telegram initData.
+ * Menangani verifikasi Telegram initData sebelum mengarahkan user ke dashboard.
  */
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signInWithCustomToken } from 'firebase/auth'
 import { useTelegramContext } from '@/app/providers'
-import { createClient } from '@/lib/supabase/client'
+import { auth } from '@/lib/firebase'
 
 export default function AuthPage() {
-  const { tg, user, initData, isReady, isTelegram } = useTelegramContext()
+  const { user, initData, isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
   const router  = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [errMsg, setErrMsg] = useState('')
 
   useEffect(() => {
-    if (!isReady) return
+    if (!isReady || !firebaseReady) return
+
+    if (isAuthenticated) {
+      router.replace('/')
+      return
+    }
+
     if (!user || !initData) {
-      // Berjalan di browser biasa (dev mode) — skip auth
       if (!isTelegram) {
         router.replace('/')
       }
       return
     }
+
     handleAuth()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, user, initData])
+  }, [isReady, firebaseReady, isAuthenticated, user, initData, isTelegram])
 
   async function handleAuth() {
     setStatus('loading')
@@ -44,7 +51,16 @@ export default function AuthPage() {
         throw new Error(data.error ?? 'Autentikasi gagal')
       }
 
-      // Supabase session sudah di-set oleh Route Handler via cookie
+      const data = await res.json()
+      if (!data.token) {
+        throw new Error('Token Firebase tidak diterima dari server')
+      }
+
+      if (!auth) {
+        throw new Error('Firebase Auth tidak tersedia di browser')
+      }
+
+      await signInWithCustomToken(auth, data.token)
       router.replace('/')
     } catch (err: unknown) {
       setStatus('error')

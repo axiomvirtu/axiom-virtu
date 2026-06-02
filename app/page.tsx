@@ -1,100 +1,262 @@
 'use client'
 
 import { useTelegramContext } from '@/app/providers'
-import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { UserRow, AssetRow, AssetCatalogRow } from '@/lib/supabase/types'
-import { formatIDR, formatTon } from '@/lib/constants'
+import { useTonConnect } from '@/hooks/useTonConnect'
+import { db } from '@/lib/firebase'
+import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
+
+// Tipe statis sementara
+type AssetCatalogRow = {
+  id: string
+  name: string
+  image_url: string
+  level_name: string
+  capital_min: number
+  capital_max: number
+  ticket_time_start: string
+  ticket_time_end: string
+  trading_time_start: string
+  trading_time_end: string
+  order_index: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface DbUser {
+  id: string
+  telegram_id: string
+  first_name?: string
+  last_name?: string
+  username?: string
+  photo_url?: string
+  wallet_address?: string | null
+}
+
+interface FirestoreCatalog {
+  name?: string
+  image_url?: string
+  level_name?: string
+  capital_min?: number | string
+  capital_max?: number | string
+  ticket_time_start?: string
+  ticket_time_end?: string
+  trading_time_start?: string
+  trading_time_end?: string
+  order_index?: number | string
+  is_active?: boolean
+  created_at?: unknown
+  updated_at?: unknown
+}
+
+function formatFirestoreDate(val: unknown): string {
+  if (!val) return new Date().toISOString()
+  if (typeof val === 'string') return val
+  if (typeof val === 'object' && val !== null && 'toDate' in val) {
+    const toDate = (val as { toDate: unknown }).toDate
+    if (typeof toDate === 'function') {
+      return (toDate.call(val) as Date).toISOString()
+    }
+  }
+  return new Date().toISOString()
+}
 
 export default function Dashboard() {
-  const { tg, user, isReady } = useTelegramContext()
-  const [dbUser, setDbUser] = useState<UserRow | null>(null)
-  const [assets, setAssets] = useState<AssetRow[]>([])
+  const router = useRouter()
+  const { user, isReady, firebaseReady, isAuthenticated, isTelegram, signOutUser } = useTelegramContext()
+  const { walletAddress, connectTonkeeper, error: walletError } = useTonConnect()
+  const [dbUser, setDbUser] = useState<DbUser | null>(null)
   const [catalogs, setCatalogs] = useState<AssetCatalogRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [connectingWallet, setConnectingWallet] = useState(false)
+  const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
+  const [signingOut, setSigningOut] = useState(false)
+  const connectedWallet = walletAddress ?? dbUser?.wallet_address ?? null
+  const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
 
   useEffect(() => {
-    async function fetchDashboardData() {
-      if (!user?.id) return
-      
-      const supabase = createClient() as any
-      
-      const { data: userData } = await supabase
-        .from('users')
-        .select('*')
-        .eq('telegram_id', user.id)
-        .single()
-        
-      if (userData) {
-        setDbUser(userData)
-        
-        const { data: assetData } = await supabase
-          .from('assets')
-          .select('*')
-          .eq('owner_id', userData.id)
-          .neq('status', 'cancelled')
-          
-        if (assetData) {
-          setAssets(assetData)
+    if (!isReady || !firebaseReady) return
+
+    if (!isAuthenticated && !isDevBypass) {
+      router.replace('/auth')
+      return
+    }
+
+    if (!user && !isDevBypass) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true)
+
+    const loadDashboardData = async () => {
+      try {
+        if (!db) {
+          throw new Error('Firebase Firestore tidak tersedia di browser')
         }
 
-        const { data: catalogData, error: catalogError } = await supabase
-          .from('asset_catalogs')
-          .select('*')
-          .eq('is_active', true)
-          .order('order_index', { ascending: true })
-          
-        if (catalogError || !catalogData || catalogData.length === 0) {
-          // Fallback mock data jika tabel belum ada
-          setCatalogs([
-            {
-              id: 'mock-1',
-              name: 'Virtu Spark V1',
-              image_url: '/images/virtu-spark.png',
-              level_name: 'Level 1 Warehouse',
-              capital_min: 6.5,
-              capital_max: 26,
-              ticket_time_start: '09:00',
-              ticket_time_end: '12:00',
-              trading_time_start: '14:00',
-              trading_time_end: '16:00',
-              order_index: 0,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            } as AssetCatalogRow,
-            {
-              id: 'mock-2',
-              name: 'Virtu Spark V2',
-              image_url: '/images/virtu-spark-v2.png',
-              level_name: 'Level 2 Warehouse',
-              capital_min: 6.5,
-              capital_max: 26,
-              ticket_time_start: '09:00',
-              ticket_time_end: '12:00',
-              trading_time_start: '20:00',
-              trading_time_end: '22:00',
-              order_index: 1,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            } as AssetCatalogRow
-          ])
-        } else {
-          setCatalogs(catalogData)
+        const activeUser = user ?? {
+          id: 'dev-user',
+          first_name: 'Developer',
+          last_name: 'Local',
+          username: 'dev',
+          photo_url: '',
         }
+
+        const telegramId = String(activeUser.id)
+        const userRef = doc(db, 'users', telegramId)
+        const userSnapshot = await getDoc(userRef)
+        const userData = userSnapshot.exists() ? userSnapshot.data() : {}
+
+        setDbUser({
+          id: telegramId,
+          telegram_id: telegramId,
+          first_name: userData?.first_name ?? activeUser.first_name ?? '',
+          last_name: userData?.last_name ?? activeUser.last_name ?? '',
+          username: userData?.username ?? activeUser.username ?? '',
+          photo_url: userData?.photo_url ?? activeUser.photo_url ?? '',
+          wallet_address: userData?.wallet_address ?? null,
+        })
+
+        const snapshot = await getDocs(collection(db, 'asset_catalogs'))
+        const loadedCatalogs = snapshot.docs.map((docSnapshot, i) => {
+          const data = docSnapshot.data() as FirestoreCatalog
+          return {
+            id: docSnapshot.id,
+            name: data.name ?? `Asset ${i + 1}`,
+            image_url: data.image_url ?? '/images/default.png',
+            level_name: data.level_name ?? 'Level 1 Warehouse',
+            capital_min: Number(data.capital_min ?? 0),
+            capital_max: Number(data.capital_max ?? 0),
+            ticket_time_start: data.ticket_time_start ?? '09:00',
+            ticket_time_end: data.ticket_time_end ?? '12:00',
+            trading_time_start: data.trading_time_start ?? '14:00',
+            trading_time_end: data.trading_time_end ?? '16:00',
+            order_index: Number(data.order_index ?? i),
+            is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
+            created_at: formatFirestoreDate(data.created_at),
+            updated_at: formatFirestoreDate(data.updated_at),
+          }
+        })
+
+        setCatalogs(loadedCatalogs.length > 0 ? loadedCatalogs : [
+          {
+            id: 'mock-1',
+            name: 'Virtu Spark V1',
+            image_url: '/images/virtu-spark.png',
+            level_name: 'Level 1 Warehouse',
+            capital_min: 6.5,
+            capital_max: 26,
+            ticket_time_start: '09:00',
+            ticket_time_end: '12:00',
+            trading_time_start: '14:00',
+            trading_time_end: '16:00',
+            order_index: 0,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: 'mock-2',
+            name: 'Virtu Spark V2',
+            image_url: '/images/virtu-spark-v2.png',
+            level_name: 'Level 2 Warehouse',
+            capital_min: 6.5,
+            capital_max: 26,
+            ticket_time_start: '09:00',
+            ticket_time_end: '12:00',
+            trading_time_start: '20:00',
+            trading_time_end: '22:00',
+            order_index: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ])
+      } catch (error) {
+        console.error('[Dashboard] Firestore load error:', error)
+        const fallbackId = user?.id ? String(user.id) : 'dev-user'
+        setDbUser({ id: fallbackId, telegram_id: fallbackId })
+        setCatalogs([
+          {
+            id: 'mock-1',
+            name: 'Virtu Spark V1',
+            image_url: '/images/virtu-spark.png',
+            level_name: 'Level 1 Warehouse',
+            capital_min: 6.5,
+            capital_max: 26,
+            ticket_time_start: '09:00',
+            ticket_time_end: '12:00',
+            trading_time_start: '14:00',
+            trading_time_end: '16:00',
+            order_index: 0,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: 'mock-2',
+            name: 'Virtu Spark V2',
+            image_url: '/images/virtu-spark-v2.png',
+            level_name: 'Level 2 Warehouse',
+            capital_min: 6.5,
+            capital_max: 26,
+            ticket_time_start: '09:00',
+            ticket_time_end: '12:00',
+            trading_time_start: '20:00',
+            trading_time_end: '22:00',
+            order_index: 1,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ])
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
-    if (isReady && user) {
-      fetchDashboardData()
-    } else if (isReady) {
-      setLoading(false) 
+    async function runLoadDashboardData() {
+      await loadDashboardData()
     }
-  }, [isReady, user])
+
+    runLoadDashboardData()
+  }, [isReady, firebaseReady, isAuthenticated, isDevBypass, user, router])
+
+  async function handleConnectWallet() {
+    if (!dbUser) return
+
+    setConnectingWallet(true)
+    setWalletConnectError(null)
+
+    try {
+      const address = await connectTonkeeper()
+      if (!address) {
+        throw new Error('Wallet connection canceled atau tidak ditemukan.')
+      }
+
+      if (!db) {
+        throw new Error('Firebase Firestore tidak tersedia di browser')
+      }
+      if (!user) {
+        throw new Error('Telegram user belum tersedia')
+      }
+
+      const telegramId = String(user.id)
+      const userRef = doc(db, 'users', telegramId)
+      await updateDoc(userRef, {
+        wallet_address: address,
+        updated_at: new Date(),
+      })
+
+      setDbUser({ ...dbUser, wallet_address: address })
+    } catch (error: unknown) {
+      setWalletConnectError(error instanceof Error ? error.message : 'Gagal menghubungkan wallet')
+    } finally {
+      setConnectingWallet(false)
+    }
+  }
 
   if (!isReady || loading) {
     return (
@@ -104,13 +266,24 @@ export default function Dashboard() {
     )
   }
 
+  const handleLogout = async () => {
+    setSigningOut(true)
+    try {
+      await signOutUser()
+      router.replace('/auth')
+    } finally {
+      setSigningOut(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-app p-5 text-primary safe-top safe-bottom overflow-x-hidden">
       {/* Header Profile */}
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-border shadow-lg">
             {user?.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={user.photo_url} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center gradient-accent text-xl font-bold text-white">
@@ -122,18 +295,52 @@ export default function Dashboard() {
             <h1 className="text-xl font-bold leading-tight tracking-wide text-primary">
               Hello, {user?.first_name || 'User'}!
             </h1>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full bg-success"></span>
-              <p className="text-xs font-medium text-secondary">
+            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-secondary">
+              <div className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-success"></span>
                 Online
-              </p>
+              </div>
+              <div className="rounded-full border border-surface-2 bg-surface-2 px-2 py-1 text-[11px] text-primary">
+                {isAuthenticated ? 'Firebase signed in' : isDevBypass ? 'Dev mode' : 'Not signed in'}
+              </div>
             </div>
           </div>
         </div>
-        <Link href="/admin/catalog" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-xl shadow-sm transition-colors hover:bg-surface-hover active:scale-95">
-          ⚙️
-        </Link>
+        <div className="flex items-center gap-3">
+          {connectedWallet ? (
+            <div className="rounded-2xl border border-surface-2 bg-surface px-3 py-2 text-sm text-primary shadow-sm">
+              {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-6)}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectWallet}
+              disabled={connectingWallet}
+              className="rounded-2xl bg-accent-start px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-end active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {connectingWallet ? 'Connecting...' : 'Connect TON'
+              }
+            </button>
+          )}
+          <Link href="/admin/catalog" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-xl shadow-sm transition-colors hover:bg-surface-hover active:scale-95">
+            ⚙️
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={signingOut}
+            className="rounded-2xl border border-danger/50 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {signingOut ? 'Signing out...' : 'Logout'}
+          </button>
+        </div>
       </header>
+
+      {(walletConnectError || walletError) && (
+        <div className="mb-6 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {walletConnectError || walletError}
+        </div>
+      )}
 
       {/* Header Profile */}
 
@@ -174,6 +381,7 @@ export default function Dashboard() {
                   <div className="w-full px-4 py-8 flex justify-center">
                     <div className="relative w-[70%] max-w-[220px] aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 glow-accent group">
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
                         src={cat.image_url} 
                         alt={cat.name} 

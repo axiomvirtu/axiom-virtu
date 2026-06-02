@@ -4,17 +4,16 @@
  * Route Handler: GET /api/prices/update
  *
  * Cron Job endpoint — dipanggil oleh Cloudflare Workers Cron
- * (atau Vercel Cron / Supabase Edge Function) setiap 1 menit.
+ * (atau Vercel Cron) setiap 1 menit.
  *
- * Alur:
+ * Alur (Placeholder for Firebase):
  * 1. Verifikasi header Authorization (cron secret)
  * 2. Fetch kurs TON/IDR dari CoinGecko
  * 3. Hitung harga Beli & Jual dengan spread flat Rp2.000
- * 4. Upsert ke tabel public.prices
- * 5. Hapus data harga yang sudah > 1 hari (cleanup)
+ * 4. (Firebase Insert akan ditambahkan di sini nantinya)
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { getAdminDb } from '@/lib/firebaseAdmin'
 
 const DEFAULT_COINGECKO_ASSET_ID = process.env.COINGECKO_ASSET_ID ?? 'the-open-network'
 const DEFAULT_COINGECKO_CURRENCY = process.env.COINGECKO_CURRENCY ?? 'idr'
@@ -64,40 +63,18 @@ export async function GET(req: NextRequest) {
     // ── 3. Hitung harga dengan spread flat ─────────────────────
     const buyPrice  = marketPrice + spread
     const sellPrice = marketPrice - spread
+    const now = new Date()
 
-    // ── 4. Insert ke tabel prices ───────────────────────────────
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('[Prices/Update] Missing SUPABASE_SERVICE_ROLE_KEY in runtime env')
-      throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY in runtime env')
-    }
-
-    const supabase = (await createAdminClient()) as any
-
-    const { error: insertError } = await supabase
-      .from('prices')
-      .insert({
-        asset_id:       assetId,
-        currency,
-        ton_market:     marketPrice.toString(),
-        ton_buy:        buyPrice.toString(),
-        ton_sell:       sellPrice.toString(),
-        spread_amount:  spread.toString(),
-        source:         'coingecko',
-        ton_idr_market: currency === 'idr' ? marketPrice.toString() : null,
-        ton_idr_buy:    currency === 'idr' ? buyPrice.toString() : null,
-        ton_idr_sell:   currency === 'idr' ? sellPrice.toString() : null,
-      })
-
-    if (insertError) {
-      throw new Error(`Supabase insert error: ${insertError.message}`)
-    }
-
-    // ── 5. Cleanup harga > 1 hari ───────────────────────────────
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    await supabase
-      .from('prices')
-      .delete()
-      .lt('fetched_at', oneDayAgo)
+    const adminDb = getAdminDb()
+    await adminDb.collection('prices').doc().set({
+      asset: assetId,
+      currency,
+      market_price: marketPrice,
+      buy_price: buyPrice,
+      sell_price: sellPrice,
+      spread,
+      created_at: now,
+    })
 
     return NextResponse.json({
       ok:         true,
@@ -107,7 +84,7 @@ export async function GET(req: NextRequest) {
       buy:        buyPrice,
       sell:       sellPrice,
       spread,
-      fetched_at: new Date().toISOString(),
+      fetched_at: now.toISOString(),
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

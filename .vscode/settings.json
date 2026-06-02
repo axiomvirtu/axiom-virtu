@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^node -e \"const fs=require\\('fs'\\);const c=fs\\.readFileSync\\('\\./node_modules/@tonconnect/sdk/lib/types/index\\.d\\.ts','utf8'\\); const lines=c\\.split\\('\\\\n'\\); for\\(let i=0;i<lines\\.length;i\\+\\+\\)\\{ if\\(lines\\[i\\]\\.includes\\('class TonConnect'\\)\\|\\|lines\\[i\\]\\.includes\\('constructor\\('\\)\\|\\|lines\\[i\\]\\.includes\\('connect\\('\\)\\|\\|lines\\[i\\]\\.includes\\('onStatusChange'\\)\\) console\\.log\\(i\\+1,lines\\[i\\]\\); \\}\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

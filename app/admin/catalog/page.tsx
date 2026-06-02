@@ -1,120 +1,194 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { AssetCatalogRow, Database } from '@/lib/supabase/types'
 import { useTelegramContext } from '@/app/providers'
 import { useRouter } from 'next/navigation'
+import { db } from '@/lib/firebase'
+import { collection, doc, getDocs, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+
+type AssetCatalogRow = {
+  id: string
+  name: string
+  image_url: string
+  level_name: string
+  capital_min: number
+  capital_max: number
+  ticket_time_start: string
+  ticket_time_end: string
+  trading_time_start: string
+  trading_time_end: string
+  order_index: number
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+interface FirestoreCatalogData {
+  name?: string
+  image_url?: string
+  level_name?: string
+  capital_min?: number
+  capital_max?: number
+  ticket_time_start?: string
+  ticket_time_end?: string
+  trading_time_start?: string
+  trading_time_end?: string
+  order_index?: number
+  is_active?: boolean
+  created_at?: unknown
+  updated_at?: unknown
+}
+
+function formatFirestoreDate(val: unknown): string {
+  if (!val) return new Date().toISOString()
+  if (typeof val === 'string') return val
+  if (typeof val === 'object' && val !== null && 'toDate' in val) {
+    const toDate = (val as { toDate: unknown }).toDate
+    if (typeof toDate === 'function') {
+      return (toDate.call(val) as Date).toISOString()
+    }
+  }
+  return new Date().toISOString()
+}
 
 export default function AdminCatalogPage() {
-  const { user, isReady } = useTelegramContext()
+  const { isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
   const router = useRouter()
   const [catalogs, setCatalogs] = useState<AssetCatalogRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  const supabase = createClient()
+  const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
 
   useEffect(() => {
+    if (!isReady || !firebaseReady) return
+
+    if (!isAuthenticated && !isDevBypass) {
+      router.replace('/auth')
+      return
+    }
+
+    async function fetchCatalogs() {
+      if (!db) {
+        setCatalogs([])
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+
+      try {
+        const snapshot = await getDocs(collection(db, 'asset_catalogs'))
+        const loaded = snapshot.docs.map((catalogDoc) => {
+          const data = catalogDoc.data() as FirestoreCatalogData
+          return {
+            id: catalogDoc.id,
+            name: data.name ?? '',
+            image_url: data.image_url ?? '/images/default.png',
+            level_name: data.level_name ?? '',
+            capital_min: Number(data.capital_min ?? 0),
+            capital_max: Number(data.capital_max ?? 0),
+            ticket_time_start: data.ticket_time_start ?? '09:00',
+            ticket_time_end: data.ticket_time_end ?? '12:00',
+            trading_time_start: data.trading_time_start ?? '14:00',
+            trading_time_end: data.trading_time_end ?? '16:00',
+            order_index: Number(data.order_index ?? 0),
+            is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
+            created_at: formatFirestoreDate(data.created_at),
+            updated_at: formatFirestoreDate(data.updated_at),
+          } as AssetCatalogRow
+        })
+
+        setCatalogs(loaded)
+      } catch (error) {
+        console.error('[AdminCatalog] fetchCatalogs error', error)
+        setCatalogs([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
     async function checkAdminAndFetchData() {
-      // Bypass early return
-      // if (!user?.id) return
+      if (!db) {
+        setLoading(false)
+        return
+      }
 
-      // Bypass cek admin sementara agar Anda bisa melihat halamannya
-      // const { data: userData } = await supabase
-      //   .from('users')
-      //   .select('role')
-      //   .eq('telegram_id', user.id)
-      //   .single()
-
-      // if (userData?.role === 'admin') {
-        setIsAdmin(true)
-        fetchCatalogs()
-      // } else {
-      //   setLoading(false)
-      // }
+      await fetchCatalogs()
     }
 
-    if (isReady) {
-      checkAdminAndFetchData()
-    }
-  }, [isReady, user])
+    checkAdminAndFetchData()
+  }, [isReady, firebaseReady, isAuthenticated, isDevBypass, router])
 
-  async function fetchCatalogs() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('asset_catalogs')
-      .select('*')
-      .order('order_index', { ascending: true })
-    
-    // Gunakan mock data jika tabel belum ada
-    if (error || !data || data.length === 0) {
-      console.warn("Using mock data because DB fetch failed or empty")
-      setCatalogs([
-        {
-          id: 'mock-1',
-          name: 'Virtu Spark V1',
-          image_url: '/images/virtu-spark.png',
-          level_name: 'Level 1 Warehouse',
-          capital_min: 6.5,
-          capital_max: 26,
-          ticket_time_start: '09:00',
-          ticket_time_end: '12:00',
-          trading_time_start: '14:00',
-          trading_time_end: '16:00',
-          order_index: 0,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as AssetCatalogRow
-      ])
-    } else {
-      setCatalogs(data)
-    }
-    setLoading(false)
-  }
-
-  const handleInputChange = (id: string, field: keyof AssetCatalogRow, value: any) => {
+  const handleInputChange = (id: string, field: keyof AssetCatalogRow, value: AssetCatalogRow[keyof AssetCatalogRow]) => {
     setCatalogs(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c))
   }
 
   const handleSave = async (catalog: AssetCatalogRow) => {
+    if (!db) {
+      alert('Firebase Firestore tidak tersedia')
+      return
+    }
+
     setSaving(true)
-    const updatePayload = {
-      name: catalog.name,
-      image_url: catalog.image_url,
-      level_name: catalog.level_name,
-      capital_min: catalog.capital_min,
-      capital_max: catalog.capital_max,
-      ticket_time_start: catalog.ticket_time_start,
-      ticket_time_end: catalog.ticket_time_end,
-      trading_time_start: catalog.trading_time_start,
-      trading_time_end: catalog.trading_time_end,
-      order_index: catalog.order_index,
-      is_active: catalog.is_active,
-    } as Database['public']['Tables']['asset_catalogs']['Update']
 
-    const { error } = await (supabase as any)
-      .from('asset_catalogs')
-      .update(updatePayload)
-      .eq('id', catalog.id)
+    try {
+      if (catalog.id.startsWith('mock-')) {
+        const newDoc = await addDoc(collection(db, 'asset_catalogs'), {
+          name: catalog.name,
+          image_url: catalog.image_url,
+          level_name: catalog.level_name,
+          capital_min: catalog.capital_min,
+          capital_max: catalog.capital_max,
+          ticket_time_start: catalog.ticket_time_start,
+          ticket_time_end: catalog.ticket_time_end,
+          trading_time_start: catalog.trading_time_start,
+          trading_time_end: catalog.trading_time_end,
+          order_index: catalog.order_index,
+          is_active: catalog.is_active,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        })
 
-    // Simulasi Save jika tabel tidak ada
-    if (error) {
-      console.warn('DB error, simulating save:', error.message)
-      setTimeout(() => {
-        setSaving(false)
-        alert('Simulated Save Successful! (Connect DB to persist)')
-      }, 500)
-    } else {
+        setCatalogs((prev) => prev.map((item) => item.id === catalog.id ? {
+          ...item,
+          id: newDoc.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } : item))
+      } else {
+        const catalogRef = doc(db, 'asset_catalogs', catalog.id)
+        await updateDoc(catalogRef, {
+          name: catalog.name,
+          image_url: catalog.image_url,
+          level_name: catalog.level_name,
+          capital_min: catalog.capital_min,
+          capital_max: catalog.capital_max,
+          ticket_time_start: catalog.ticket_time_start,
+          ticket_time_end: catalog.ticket_time_end,
+          trading_time_start: catalog.trading_time_start,
+          trading_time_end: catalog.trading_time_end,
+          order_index: catalog.order_index,
+          is_active: catalog.is_active,
+          updated_at: serverTimestamp(),
+        })
+
+        setCatalogs((prev) => prev.map((item) => item.id === catalog.id ? {
+          ...item,
+          updated_at: new Date().toISOString(),
+        } : item))
+      }
+
+      alert('Catalog berhasil disimpan')
+    } catch (error) {
+      console.error('[AdminCatalog] handleSave error', error)
+      alert('Gagal menyimpan catalog. Coba lagi.')
+    } finally {
       setSaving(false)
-      alert('Saved successfully!')
     }
   }
 
   const handleAddNew = async () => {
-    const newCat: Omit<AssetCatalogRow, 'id' | 'created_at' | 'updated_at'> = {
+    const placeholder: Omit<AssetCatalogRow, 'id' | 'created_at' | 'updated_at'> = {
       name: 'New Asset',
       image_url: '/images/default.png',
       level_name: 'Level X',
@@ -125,16 +199,17 @@ export default function AdminCatalogPage() {
       trading_time_start: '14:00',
       trading_time_end: '16:00',
       order_index: catalogs.length,
-      is_active: true
+      is_active: true,
     }
-    const { data, error } = await (supabase as any).from('asset_catalogs').insert(newCat).select().single()
-    if (data) {
-      setCatalogs([...catalogs, data])
-    } else {
-      // Simulasi penambahan baru jika DB belum konek
-      const mockNew = { ...newCat, id: 'mock-' + Date.now(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as AssetCatalogRow
-      setCatalogs([...catalogs, mockNew])
-    }
+
+    const mockNew = {
+      ...placeholder,
+      id: 'mock-' + Date.now(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as AssetCatalogRow
+
+    setCatalogs((prev) => [...prev, mockNew])
   }
 
   if (!isReady || loading) {

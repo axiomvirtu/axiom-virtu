@@ -3,16 +3,15 @@
  *
  * Route Handler: POST /api/auth/telegram
  *
- * Alur:
+ * Alur (Placeholder untuk Firebase):
  * 1. Terima initData dari client
  * 2. Validasi HMAC-SHA256 (anti-spoofing)
- * 3. Upsert user ke tabel public.users
- * 4. Sign-in ke Supabase Auth (anonymous sign-in linked ke telegram_id)
- * 5. Return session cookie
+ * 3. (Akan diganti menjadi Firebase Auth / Custom Token Sign-in)
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 import { validateTelegramInitData } from '@/lib/telegram/validate'
+import { getAdminAuth, getAdminDb } from '@/lib/firebaseAdmin'
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +25,42 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Rate limiting (per IP) backed by Firestore to work across instances
+    const adminDb = getAdminDb()
+    const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || ''
+    const clientIp = forwarded.split(',')[0].trim() || 'unknown'
+    const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60000)
+    const maxPerWindow = Number(process.env.RATE_LIMIT_MAX ?? 20)
+
+    try {
+      const rlRef = adminDb.collection('telegram_rate_limits').doc(clientIp)
+      const rlSnap = await rlRef.get()
+      const now = Date.now()
+
+      if (rlSnap.exists) {
+        interface RateLimitData {
+          windowStart?: number
+          count?: number
+        }
+        const data = rlSnap.data() as RateLimitData
+        const windowStart = data.windowStart ?? 0
+        const count = data.count ?? 0
+
+        if (now - windowStart < windowMs) {
+          if (count >= maxPerWindow) {
+            return NextResponse.json({ error: 'rate_limit_exceeded' }, { status: 429 })
+          }
+          await rlRef.update({ count: count + 1 })
+        } else {
+          await rlRef.set({ windowStart: now, count: 1 })
+        }
+      } else {
+        await rlRef.set({ windowStart: now, count: 1 })
+      }
+    } catch (e) {
+      console.warn('[Auth] rate limit check failed, continuing', e)
+    }
+
     // ── 1. Validasi Telegram signature ─────────────────────────
     const telegramData = validateTelegramInitData(initData)
     if (!telegramData || !telegramData.user) {
@@ -36,69 +71,48 @@ export async function POST(req: NextRequest) {
     }
 
     const tgUser = telegramData.user
-    const supabase = (await createClient()) as any
+    const telegramId = String(tgUser.id)
+    const adminAuth = getAdminAuth()
 
-    // ── 2. Sign-in anonim ke Supabase Auth ─────────────────────
-    // Gunakan email sintetis berbasis telegram_id agar unik & deterministik
-    const syntheticEmail    = `tg_${tgUser.id}@axiom-virtu.internal`
-    const syntheticPassword = `tg_${tgUser.id}_${process.env.TELEGRAM_BOT_TOKEN!.slice(-8)}`
+    // Replay protection: store hash of initData and reject duplicates
+    try {
+      const hash = crypto.createHash('sha256').update(initData).digest('hex')
+      const nonceRef = adminDb.collection('telegram_init_nonces').doc(hash)
+      const nonceSnap = await nonceRef.get()
+      if (nonceSnap.exists) {
+        // Reject replayed initData
+        return NextResponse.json({ error: 'replayed_initdata' }, { status: 409 })
+      }
 
-    // Coba sign-in dulu, kalau gagal baru sign-up
-    let authResult: any = await supabase.auth.signInWithPassword({
-      email:    syntheticEmail,
-      password: syntheticPassword,
+      const ttlMs = Number(process.env.INIT_NONCE_TTL_MS ?? 5 * 60 * 1000) // default 5 minutes
+      const expiresAt = new Date(Date.now() + ttlMs)
+
+      // Store nonce with expiresAt for Firestore TTL automatic deletion (enable TTL on `expiresAt` field in Console)
+      await nonceRef.set({ telegramId, createdAt: new Date(), expiresAt })
+    } catch (e) {
+      console.warn('[Auth] nonce check failed, continuing', e)
+    }
+    const userRef = adminDb.collection('users').doc(telegramId)
+    const snapshot = await userRef.get()
+    const existingUser = snapshot.exists ? snapshot.data() : {}
+
+    const userData = {
+      telegram_id: telegramId,
+      first_name: tgUser.first_name ?? '',
+      last_name: tgUser.last_name ?? '',
+      username: tgUser.username ?? '',
+      photo_url: tgUser.photo_url ?? '',
+      wallet_address: existingUser?.wallet_address ?? null,
+      updated_at: new Date(),
+      created_at: snapshot.exists ? existingUser?.created_at ?? new Date() : new Date(),
+    }
+
+    await userRef.set(userData, { merge: true })
+    const customToken = await adminAuth.createCustomToken(telegramId, {
+      telegram_id: telegramId,
     })
 
-    if (authResult.error) {
-      // User belum ada di Supabase Auth → buat baru
-      authResult = await supabase.auth.signUp({
-        email:    syntheticEmail,
-        password: syntheticPassword,
-        options:  { emailRedirectTo: undefined },
-      })
-
-      if (authResult.error) {
-        console.error('[Auth] Supabase signUp error:', authResult.error)
-        return NextResponse.json(
-          { error: 'Gagal membuat akun' },
-          { status: 500 },
-        )
-      }
-    }
-
-    const authUser = authResult.data.user
-    if (!authUser) {
-      return NextResponse.json({ error: 'Auth user tidak ditemukan' }, { status: 500 })
-    }
-
-    // ── 3. Upsert ke public.users ───────────────────────────────
-    const { error: upsertError } = await supabase
-      .from('users')
-      .upsert(
-        {
-          id:          authUser.id,
-          telegram_id: tgUser.id,
-          username:    tgUser.username   ?? null,
-          first_name:  tgUser.first_name ?? null,
-          last_name:   tgUser.last_name  ?? null,
-          avatar_url:  tgUser.photo_url  ?? null,
-          status:      'active',
-        },
-        {
-          onConflict:        'telegram_id',
-          ignoreDuplicates:  false,
-        },
-      )
-
-    if (upsertError) {
-      console.error('[Auth] Upsert user error:', upsertError)
-      return NextResponse.json(
-        { error: 'Gagal menyimpan data user' },
-        { status: 500 },
-      )
-    }
-
-    return NextResponse.json({ ok: true, userId: authUser.id })
+    return NextResponse.json({ ok: true, userId: telegramId, token: customToken })
   } catch (err) {
     console.error('[Auth] Unexpected error:', err)
     return NextResponse.json(

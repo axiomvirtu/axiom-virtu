@@ -59,6 +59,7 @@ export function useTelegram(): UseTelegramReturn {
 
     if (!webApp) {
       // Berjalan di browser biasa (development), set ready tanpa SDK
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsReady(true)
       return
     }

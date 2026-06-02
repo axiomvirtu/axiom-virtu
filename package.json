@@ -6,15 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "set-admin": "node scripts/set-admin-claim.js",
+    "cleanup-nonces": "node scripts/cleanup-nonces.js",
+    "check-env": "node scripts/check-env.js"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.10.3",
-    "@supabase/supabase-js": "^2.106.1",
+    "@tonconnect/sdk": "^3.4.1",
+    "firebase": "^12.14.0",
+    "firebase-admin": "^13.10.0",
     "next": "16.2.6",
+    "node-fetch": "^3.3.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "node-fetch": "^3.3.2"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
