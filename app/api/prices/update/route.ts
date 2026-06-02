@@ -14,6 +14,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminDb } from '@/lib/firebaseAdmin'
+import { sendAdminLog } from '@/lib/telegram/logger'
 
 const DEFAULT_COINGECKO_ASSET_ID = process.env.COINGECKO_ASSET_ID ?? 'the-open-network'
 const DEFAULT_COINGECKO_CURRENCY = process.env.COINGECKO_CURRENCY ?? 'idr'
@@ -76,6 +77,14 @@ export async function GET(req: NextRequest) {
       created_at: now,
     })
 
+    await sendAdminLog(
+      `📈 <b>Price Update Success</b>\n` +
+      `• Asset: <code>${assetId.toUpperCase()}</code>\n` +
+      `• Market Price: <b>Rp ${marketPrice.toLocaleString('id-ID')}</b>\n` +
+      `• Buy Price (+Spread): <b>Rp ${buyPrice.toLocaleString('id-ID')}</b>\n` +
+      `• Sell Price (-Spread): <b>Rp ${sellPrice.toLocaleString('id-ID')}</b>`
+    )
+
     return NextResponse.json({
       ok:         true,
       asset:      assetId,
@@ -89,6 +98,10 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[Prices/Update] Error:', message)
+    await sendAdminLog(
+      `⚠️ <b>Price Update Failed</b>\n` +
+      `• Error: <code>${message}</code>`
+    )
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

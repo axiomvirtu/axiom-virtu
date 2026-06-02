@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { validateTelegramInitData } from '@/lib/telegram/validate'
 import { getAdminAuth, getAdminDb } from '@/lib/firebaseAdmin'
+import { sendAdminLog } from '@/lib/telegram/logger'
 
 export async function POST(req: NextRequest) {
   try {
@@ -108,6 +109,15 @@ export async function POST(req: NextRequest) {
     }
 
     await userRef.set(userData, { merge: true })
+
+    await sendAdminLog(
+      `👤 <b>User Authenticated</b>\n` +
+      `• Telegram ID: <code>${telegramId}</code>\n` +
+      `• Name: <b>${tgUser.first_name} ${tgUser.last_name ?? ''}</b>\n` +
+      `• Username: @${tgUser.username || '-'}\n` +
+      `• Status: ${snapshot.exists ? 'Login Kembali' : 'Registrasi Baru'}`
+    )
+
     const customToken = await adminAuth.createCustomToken(telegramId, {
       telegram_id: telegramId,
     })
