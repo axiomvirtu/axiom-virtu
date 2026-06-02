@@ -1,6 +1,31 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/no-require-imports */
 const admin = require('firebase-admin')
+const fs = require('fs')
+const path = require('path')
+
+// Load .env and .env.local if they exist
+const envFiles = ['.env', '.env.local']
+envFiles.forEach(file => {
+  const filePath = path.join(process.cwd(), file)
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, 'utf8')
+    content.split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim()
+      if (trimmed && !trimmed.startsWith('#')) {
+        const parts = trimmed.split('=')
+        if (parts.length >= 2) {
+          const key = parts[0].trim()
+          const value = parts.slice(1).join('=').trim()
+          const cleanValue = value.replace(/^['"]|['"]$/g, '')
+          if (!process.env[key] && cleanValue) {
+            process.env[key] = cleanValue
+          }
+        }
+      }
+    })
+  }
+})
 
 function parseServiceAccount() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
