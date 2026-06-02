@@ -60,9 +60,31 @@ async function main() {
   try {
     await admin.auth().setCustomUserClaims(uid, { admin: adminFlag })
     console.log(`Set admin=${adminFlag} for uid=${uid}`)
+
+    const db = admin.firestore()
+    const adminRef = db.collection('admins').doc(uid)
+
+    if (adminFlag) {
+      const snap = await adminRef.get()
+      const now = admin.firestore.FieldValue.serverTimestamp()
+      const adminData = {
+        telegram_id: uid,
+        role: 'admin',
+        updated_at: now
+      }
+      if (!snap.exists) {
+        adminData.created_at = now
+      }
+      await adminRef.set(adminData, { merge: true })
+      console.log(`Document admins/${uid} successfully created/updated in Firestore.`)
+    } else {
+      await adminRef.delete()
+      console.log(`Document admins/${uid} successfully deleted from Firestore.`)
+    }
+
     process.exit(0)
   } catch (err) {
-    console.error('Error setting custom claims:', err)
+    console.error('Error setting custom claims / updating Firestore:', err)
     process.exit(1)
   }
 }
