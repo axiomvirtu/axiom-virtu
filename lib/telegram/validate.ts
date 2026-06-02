@@ -11,18 +11,11 @@
 import { createHmac } from 'crypto'
 import type { TelegramInitData } from './types'
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? ''
-
-/**
- * Validasi initData dari Telegram Mini App.
- *
- * @param initDataRaw - String initData dari `window.Telegram.WebApp.initData`
- * @returns Parsed TelegramInitData jika valid, null jika tidak valid / expired
- */
 export function validateTelegramInitData(
   initDataRaw: string,
 ): TelegramInitData | null {
-  if (!initDataRaw || !TELEGRAM_BOT_TOKEN) return null
+  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? ''
+  if (!initDataRaw || !botToken) return null
 
   try {
     const params     = new URLSearchParams(initDataRaw)
@@ -38,7 +31,7 @@ export function validateTelegramInitData(
 
     // Secret key = HMAC-SHA256("WebAppData", BOT_TOKEN)
     const secretKey = createHmac('sha256', 'WebAppData')
-      .update(TELEGRAM_BOT_TOKEN)
+      .update(botToken)
       .digest()
 
     // Hitung HMAC dari data-check-string menggunakan secret key
