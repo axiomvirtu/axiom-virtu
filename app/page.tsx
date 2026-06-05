@@ -66,14 +66,13 @@ function formatFirestoreDate(val: unknown): string {
 
 export default function Dashboard() {
   const router = useRouter()
-  const { user, isReady, firebaseReady, isAuthenticated, isTelegram, signOutUser } = useTelegramContext()
+  const { user, isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
   const { walletAddress, connectTonkeeper, error: walletError } = useTonConnect()
   const [dbUser, setDbUser] = useState<DbUser | null>(null)
   const [catalogs, setCatalogs] = useState<AssetCatalogRow[]>([])
   const [loading, setLoading] = useState(true)
   const [connectingWallet, setConnectingWallet] = useState(false)
   const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
-  const [signingOut, setSigningOut] = useState(false)
   const connectedWallet = walletAddress ?? dbUser?.wallet_address ?? null
   const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
 
@@ -266,15 +265,7 @@ export default function Dashboard() {
     )
   }
 
-  const handleLogout = async () => {
-    setSigningOut(true)
-    try {
-      await signOutUser()
-      router.replace('/auth')
-    } finally {
-      setSigningOut(false)
-    }
-  }
+
 
   return (
     <main className="min-h-screen bg-app p-5 text-primary safe-top safe-bottom overflow-x-hidden">
@@ -325,14 +316,6 @@ export default function Dashboard() {
           <Link href="/admin/catalog" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-xl shadow-sm transition-colors hover:bg-surface-hover active:scale-95">
             ⚙️
           </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={signingOut}
-            className="rounded-2xl border border-danger/50 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {signingOut ? 'Signing out...' : 'Logout'}
-          </button>
         </div>
       </header>
 

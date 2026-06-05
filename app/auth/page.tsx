@@ -68,6 +68,37 @@ export default function AuthPage() {
     }
   }
 
+  async function handleDevAuth() {
+    setStatus('loading')
+    try {
+      const res = await fetch('/api/auth/telegram', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ initData: 'dev-bypass' }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Autentikasi dev gagal')
+      }
+
+      const data = await res.json()
+      if (!data.token) {
+        throw new Error('Token Firebase tidak diterima')
+      }
+
+      if (!auth) {
+        throw new Error('Firebase Auth tidak tersedia di browser')
+      }
+
+      await signInWithCustomToken(auth, data.token)
+      router.replace('/')
+    } catch (err: unknown) {
+      setStatus('error')
+      setErrMsg(err instanceof Error ? err.message : 'An error occurred')
+    }
+  }
+
   // ─── Dev mode: bypass auth ────────────────────────────────────
   if (!isTelegram && process.env.NODE_ENV === 'development') {
     return (
@@ -78,11 +109,15 @@ export default function AuthPage() {
           <p className="text-secondary text-sm mb-4">
             Running outside Telegram. Auth bypassed for development.
           </p>
+          {status === 'error' && (
+            <p className="text-danger text-sm mb-4">{errMsg}</p>
+          )}
           <button
-            onClick={() => router.replace('/')}
-            className="w-full py-3 rounded-lg gradient-accent text-white font-semibold text-sm"
+            onClick={handleDevAuth}
+            disabled={status === 'loading'}
+            className="w-full py-3 rounded-lg gradient-accent text-white font-semibold text-sm disabled:opacity-55"
           >
-            Enter Dashboard
+            {status === 'loading' ? 'Authenticating...' : 'Enter Dashboard'}
           </button>
         </div>
       </div>

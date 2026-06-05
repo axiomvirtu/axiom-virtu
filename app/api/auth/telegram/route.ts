@@ -26,6 +26,35 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Dev mode bypass for local testing outside Telegram
+    if (initData === 'dev-bypass' && process.env.NODE_ENV === 'development') {
+      const adminAuth = getAdminAuth()
+      const adminDb = getAdminDb()
+      const telegramId = 'dev-user'
+      const userRef = adminDb.collection('users').doc(telegramId)
+      const snapshot = await userRef.get()
+      const existingUser = snapshot.exists ? snapshot.data() : {}
+
+      const userData = {
+        telegram_id: telegramId,
+        first_name: 'Developer',
+        last_name: 'Local',
+        username: 'dev',
+        photo_url: '',
+        wallet_address: existingUser?.wallet_address ?? null,
+        updated_at: new Date(),
+        created_at: snapshot.exists ? existingUser?.created_at ?? new Date() : new Date(),
+      }
+
+      await userRef.set(userData, { merge: true })
+
+      const customToken = await adminAuth.createCustomToken(telegramId, {
+        telegram_id: telegramId,
+      })
+
+      return NextResponse.json({ ok: true, userId: telegramId, token: customToken })
+    }
+
     // Rate limiting (per IP) backed by Firestore to work across instances
     const adminDb = getAdminDb()
     const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || ''
