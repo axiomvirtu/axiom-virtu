@@ -2,29 +2,29 @@
 
 @theme {
   /* Colors */
-  --color-app: #0b0b12;
-  --color-surface: #141421;
-  --color-surface-2: #1e1e30;
-  --color-surface-hover: #2a2a40;
+  --color-app: #000000;
+  --color-surface: #0a0a0c;
+  --color-surface-2: #121214;
+  --color-surface-hover: #1b1b1f;
   
   --color-primary: #ffffff;
   --color-secondary: #94a3b8;
   --color-muted: #64748b;
 
-  --color-success: #10b981;
+  --color-success: #00ff00;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-info: #0ea5e9;
 
-  --color-accent-start: #7c3aed;
-  --color-accent-end: #06b6d4;
+  --color-accent-start: #7f00ff;
+  --color-accent-end: #7f00ff;
   
   --color-border: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
   body {
-    background-color: var(--color-app);
+    background-color: #000000;
     color: var(--color-primary);
     -webkit-tap-highlight-color: transparent;
   }

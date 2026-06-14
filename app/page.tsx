@@ -64,6 +64,288 @@ function formatFirestoreDate(val: unknown): string {
   return new Date().toISOString()
 }
 
+// Icons
+function ExchangeIcon() {
+  return (
+    <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Green circular loop arrows */}
+      <path d="M12 20C12 14.4772 16.4772 10 22 10C24.3166 10 26.4411 10.7874 28.1428 12.1111" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M16 12L22 10L16 6" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      
+      <path d="M36 28C36 33.5228 31.5228 38 26 38C23.6834 38 21.5589 37.2126 19.8572 35.8889" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M32 36L26 38L32 42" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Euro Circle (Pink/Purple) */}
+      <circle cx="18" cy="18" r="8" fill="#EC4899" />
+      <text x="18" y="21.5" fill="white" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">€</text>
+
+      {/* Dollar Circle (Yellow/Gold) */}
+      <circle cx="30" cy="30" r="8" fill="#FBBF24" />
+      <text x="30" y="33.5" fill="black" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">$</text>
+    </svg>
+  )
+}
+
+function HistoryIcon() {
+  return (
+    <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Notepad paper */}
+      <rect x="14" y="8" width="20" height="32" rx="3" fill="#FDE047" stroke="#374151" strokeWidth="2.5" />
+      {/* Horizontal lines on paper */}
+      <line x1="18" y1="16" x2="30" y2="16" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" />
+      <line x1="18" y1="22" x2="30" y2="22" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" />
+      <line x1="18" y1="28" x2="30" y2="28" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" />
+      <line x1="18" y1="34" x2="26" y2="34" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" />
+      {/* Pencil */}
+      <g transform="translate(30, 12) rotate(15)">
+        <path d="M0 0 L4 0 L4 18 L2 22 L0 18 Z" fill="#EC4899" stroke="#374151" strokeWidth="1.5" />
+        <path d="M0 18 L2 22 L4 18 Z" fill="#F3F4F6" />
+        <circle cx="2" cy="21" r="0.8" fill="black" />
+      </g>
+    </svg>
+  )
+}
+
+// Data structures
+const categories = ['Nova Apex', 'Chrono Shift', 'Aether Pulse', 'Axiom Core', 'Virtu Spark']
+
+function getCategoryName(levelName: string, name: string): string {
+  const ln = levelName.toLowerCase()
+  const n = name.toLowerCase()
+  if (ln.includes('nova apex') || n.includes('apex titan')) return 'Nova Apex'
+  if (ln.includes('chrono shift') || n.includes('chronos vortex')) return 'Chrono Shift'
+  if (ln.includes('aether pulse') || n.includes('pulse horizon')) return 'Aether Pulse'
+  if (ln.includes('axiom core') || n.includes('nexus') || n.includes('prime')) return 'Axiom Core'
+  if (ln.includes('virtu spark') || n.includes('alpha') || n.includes('beta')) return 'Virtu Spark'
+  return 'Virtu Spark'
+}
+
+interface CardDetail {
+  displayName: string
+  startCapital: string
+  ticketPurchase: string
+  assetTrading: string
+  contractAsset: string
+  profit: string
+  isMulti: boolean
+}
+
+const CATEGORY_DETAILS: Record<string, CardDetail> = {
+  'Apex Titan': {
+    displayName: 'APEX TITAN',
+    startCapital: '800 - 2500 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '21:00 - 23:00 ( UTC+7 )',
+    contractAsset: '1 Month',
+    profit: '8%',
+    isMulti: false
+  },
+  'Chronos Vortex': {
+    displayName: 'CHRONOS VORTEX',
+    startCapital: '300 - 799.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '16:00 - 18:00 ( UTC+7 )',
+    contractAsset: '1 Week',
+    profit: '6%',
+    isMulti: false
+  },
+  'Pulse Horizon': {
+    displayName: 'PULSE HORIZON',
+    startCapital: '100 - 299.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '15:00 - 17:00 ( UTC+7 )',
+    contractAsset: '3 Day',
+    profit: '8%',
+    isMulti: false
+  },
+  'Core Nexus': {
+    displayName: 'AXIOM NEXUS',
+    startCapital: '40 - 99.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '14:00 - 16:00 ( UTC+7 )',
+    contractAsset: '1 Day',
+    profit: '10%',
+    isMulti: true
+  },
+  'Core Prime': {
+    displayName: 'AXIOM PRIME',
+    startCapital: '40 - 99.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '20:00 - 22:00 ( UTC+7 )',
+    contractAsset: '1 Day',
+    profit: '10%',
+    isMulti: true
+  },
+  'Spark Alpha': {
+    displayName: 'SPARK ALPHA',
+    startCapital: '10 - 39.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '12:00 - 14:00 ( UTC+7 )',
+    contractAsset: '1 Day',
+    profit: '10%',
+    isMulti: true
+  },
+  'Spark Beta': {
+    displayName: 'SPARK BETA',
+    startCapital: '10 - 39.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '18:00 - 20:00 ( UTC+7 )',
+    contractAsset: '1 Day',
+    profit: '10%',
+    isMulti: true
+  }
+}
+
+function getCardDetail(name: string): CardDetail {
+  const n = name.toLowerCase()
+  if (n.includes('apex') || n.includes('titan')) {
+    return CATEGORY_DETAILS['Apex Titan']
+  }
+  if (n.includes('vortex') || n.includes('chronos')) {
+    return CATEGORY_DETAILS['Chronos Vortex']
+  }
+  if (n.includes('horizon') || n.includes('pulse')) {
+    return CATEGORY_DETAILS['Pulse Horizon']
+  }
+  if (n.includes('nexus') || (n.includes('core') && !n.includes('prime') && !n.includes('v2'))) {
+    return CATEGORY_DETAILS['Core Nexus']
+  }
+  if (n.includes('prime') || (n.includes('core') && n.includes('v2'))) {
+    return CATEGORY_DETAILS['Core Prime']
+  }
+  if (n.includes('alpha') || (n.includes('spark') && !n.includes('beta') && !n.includes('v2'))) {
+    return CATEGORY_DETAILS['Spark Alpha']
+  }
+  if (n.includes('beta') || (n.includes('spark') && n.includes('v2'))) {
+    return CATEGORY_DETAILS['Spark Beta']
+  }
+  
+  return {
+    displayName: name.toUpperCase(),
+    startCapital: '10 - 39.99 TON',
+    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
+    assetTrading: '12:00 - 14:00 ( UTC+7 )',
+    contractAsset: '1 Day',
+    profit: '10%',
+    isMulti: true
+  }
+}
+
+const fallbackCatalogs: AssetCatalogRow[] = [
+  {
+    id: 'mock-spark-alpha',
+    name: 'Spark Alpha',
+    image_url: '/images/virtu-spark.png',
+    level_name: 'Virtu Spark - Sesi 1',
+    capital_min: 10.00,
+    capital_max: 39.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '12:00',
+    trading_time_end: '14:00',
+    order_index: 0,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-spark-beta',
+    name: 'Spark Beta',
+    image_url: '/images/virtu-spark.png',
+    level_name: 'Virtu Spark - Sesi 2',
+    capital_min: 10.00,
+    capital_max: 39.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '18:00',
+    trading_time_end: '20:00',
+    order_index: 1,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-axiom-nexus',
+    name: 'Core Nexus',
+    image_url: '/images/axiom-core.png',
+    level_name: 'Axiom Core - Sesi 1',
+    capital_min: 40.00,
+    capital_max: 99.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '14:00',
+    trading_time_end: '16:00',
+    order_index: 2,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-axiom-prime',
+    name: 'Core Prime',
+    image_url: '/images/axiom-core.png',
+    level_name: 'Axiom Core - Sesi 2',
+    capital_min: 40.00,
+    capital_max: 99.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '20:00',
+    trading_time_end: '22:00',
+    order_index: 3,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-pulse-horizon',
+    name: 'Pulse Horizon',
+    image_url: '/images/aether-pulse.png',
+    level_name: 'Aether Pulse',
+    capital_min: 100.00,
+    capital_max: 299.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '15:00',
+    trading_time_end: '17:00',
+    order_index: 4,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-chronos-vortex',
+    name: 'Chronos Vortex',
+    image_url: '/images/chronos-shift.png',
+    level_name: 'Chronos Shift',
+    capital_min: 300.00,
+    capital_max: 799.99,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '16:00',
+    trading_time_end: '18:00',
+    order_index: 5,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-apex-titan',
+    name: 'Apex Titan',
+    image_url: '/images/nova-apex.png',
+    level_name: 'Nova Apex',
+    capital_min: 800.00,
+    capital_max: 2500.00,
+    ticket_time_start: '09:00',
+    ticket_time_end: '11:00',
+    trading_time_start: '21:00',
+    trading_time_end: '23:00',
+    order_index: 6,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+]
+
 export default function Dashboard() {
   const router = useRouter()
   const { user, isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
@@ -73,6 +355,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [connectingWallet, setConnectingWallet] = useState(false)
   const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
+  const [activeCategory, setActiveCategory] = useState<string>('Nova Apex')
+  
   const connectedWallet = walletAddress ?? dbUser?.wallet_address ?? null
   const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
 
@@ -86,7 +370,6 @@ export default function Dashboard() {
 
     if (!user && !isDevBypass) return
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
 
     const loadDashboardData = async () => {
@@ -139,78 +422,12 @@ export default function Dashboard() {
           }
         })
 
-        setCatalogs(loadedCatalogs.length > 0 ? loadedCatalogs : [
-          {
-            id: 'mock-1',
-            name: 'Virtu Spark V1',
-            image_url: '/images/virtu-spark.png',
-            level_name: 'Level 1 Warehouse',
-            capital_min: 6.5,
-            capital_max: 26,
-            ticket_time_start: '09:00',
-            ticket_time_end: '12:00',
-            trading_time_start: '14:00',
-            trading_time_end: '16:00',
-            order_index: 0,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: 'mock-2',
-            name: 'Virtu Spark V2',
-            image_url: '/images/virtu-spark-v2.png',
-            level_name: 'Level 2 Warehouse',
-            capital_min: 6.5,
-            capital_max: 26,
-            ticket_time_start: '09:00',
-            ticket_time_end: '12:00',
-            trading_time_start: '20:00',
-            trading_time_end: '22:00',
-            order_index: 1,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ])
+        setCatalogs(loadedCatalogs.length > 0 ? loadedCatalogs : fallbackCatalogs)
       } catch (error) {
         console.error('[Dashboard] Firestore load error:', error)
         const fallbackId = user?.id ? String(user.id) : 'dev-user'
         setDbUser({ id: fallbackId, telegram_id: fallbackId })
-        setCatalogs([
-          {
-            id: 'mock-1',
-            name: 'Virtu Spark V1',
-            image_url: '/images/virtu-spark.png',
-            level_name: 'Level 1 Warehouse',
-            capital_min: 6.5,
-            capital_max: 26,
-            ticket_time_start: '09:00',
-            ticket_time_end: '12:00',
-            trading_time_start: '14:00',
-            trading_time_end: '16:00',
-            order_index: 0,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: 'mock-2',
-            name: 'Virtu Spark V2',
-            image_url: '/images/virtu-spark-v2.png',
-            level_name: 'Level 2 Warehouse',
-            capital_min: 6.5,
-            capital_max: 26,
-            ticket_time_start: '09:00',
-            ticket_time_end: '12:00',
-            trading_time_start: '20:00',
-            trading_time_end: '22:00',
-            order_index: 1,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ])
+        setCatalogs(fallbackCatalogs)
       } finally {
         setLoading(false)
       }
@@ -259,159 +476,240 @@ export default function Dashboard() {
 
   if (!isReady || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-app">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-surface-2 border-t-accent-start"></div>
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-800 border-t-[#7F00FF]"></div>
       </div>
     )
   }
 
+  // Group and filter items based on the active tab/category
+  const activeItems = catalogs.filter(
+    (item) => getCategoryName(item.level_name, item.name) === activeCategory
+  )
 
+  const usernameText = (dbUser?.username || user?.username || dbUser?.first_name || user?.first_name || 'username').toLowerCase()
 
   return (
-    <main className="min-h-screen bg-app p-5 text-primary safe-top safe-bottom overflow-x-hidden">
+    <main className="min-h-screen bg-black px-6 py-6 text-white safe-top safe-bottom overflow-y-auto">
       {/* Header Profile */}
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-border shadow-lg">
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 bg-white rounded-full flex-shrink-0 shadow-md">
             {user?.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.photo_url} alt="Avatar" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center gradient-accent text-xl font-bold text-white">
-                {user?.first_name?.charAt(0) || 'U'}
-              </div>
-            )}
+              <img src={user.photo_url} alt="Avatar" className="h-full w-full object-cover rounded-full" />
+            ) : null}
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold leading-tight tracking-wide text-primary">
-              Hello, {user?.first_name || 'User'}!
+            <h1 className="text-xl font-medium tracking-wide text-white leading-none">
+              hello, {usernameText} !
             </h1>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-secondary">
-              <div className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-success"></span>
-                Online
-              </div>
-              <div className="rounded-full border border-surface-2 bg-surface-2 px-2 py-1 text-[11px] text-primary">
-                {isAuthenticated ? 'Firebase signed in' : isDevBypass ? 'Dev mode' : 'Not signed in'}
-              </div>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="w-2.5 h-2.5 bg-[#00FF00] rounded-full inline-block"></span>
+              <span className="text-xs text-white">Online</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {connectedWallet ? (
-            <div className="rounded-2xl border border-surface-2 bg-surface px-3 py-2 text-sm text-primary shadow-sm">
-              {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-6)}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleConnectWallet}
-              disabled={connectingWallet}
-              className="rounded-2xl bg-accent-start px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-end active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {connectingWallet ? 'Connecting...' : 'Connect TON'
-              }
-            </button>
-          )}
-          <Link href="/admin/catalog" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-xl shadow-sm transition-colors hover:bg-surface-hover active:scale-95">
-            ⚙️
-          </Link>
-        </div>
+        
+        {/* Settings gear link */}
+        <Link 
+          href="/admin/catalog" 
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white shadow-sm transition-all active:scale-90"
+        >
+          ⚙️
+        </Link>
       </header>
 
+      {/* Wallet Connect Error Display */}
       {(walletConnectError || walletError) && (
-        <div className="mb-6 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {walletConnectError || walletError}
         </div>
       )}
 
-      {/* Header Profile */}
-
-      {/* Quick Actions */}
-      <div className="mb-10 flex justify-center gap-8">
-        {[
-          { icon: '💱', label: 'Swap IDR' },
-          { icon: '📜', label: 'History' },
-        ].map((action, i) => (
-          <div key={i} className="flex flex-col items-center gap-2.5">
-            <button className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-surface-2 text-2xl shadow-sm transition-transform hover:bg-surface-hover active:scale-90">
-              {action.icon}
-            </button>
-            <span className="text-[11px] font-semibold tracking-wide text-secondary">{action.label}</span>
+      {/* Connect TON Button */}
+      <div className="mb-8">
+        {connectedWallet ? (
+          <div className="w-full bg-[#7F00FF] py-3.5 px-6 rounded-full text-center text-white font-semibold tracking-wide shadow-md shadow-[#7F00FF]/20 flex items-center justify-center gap-2">
+            <span>TON Connected:</span>
+            <span className="font-bold">{connectedWallet.slice(0, 6)}...{connectedWallet.slice(-6)}</span>
           </div>
-        ))}
+        ) : (
+          <button
+            onClick={handleConnectWallet}
+            disabled={connectingWallet}
+            className="w-full bg-[#7F00FF] py-3.5 px-6 rounded-full text-center text-white font-semibold tracking-wide transition-all duration-200 hover:brightness-110 active:scale-98 shadow-md shadow-[#7F00FF]/25 disabled:opacity-60"
+          >
+            {connectingWallet ? 'Connecting...' : 'Connect TON'}
+          </button>
+        )}
       </div>
 
-      {/* Katalog Aset */}
-      <section className="mb-8">
-        <div className="mb-4 flex items-center justify-between px-1">
-          <h3 className="text-lg font-bold tracking-wide text-primary">Asset Catalog</h3>
+      {/* Quick Actions Row */}
+      <div className="flex items-start justify-around mb-8 max-w-sm mx-auto">
+        {/* Exchange */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button className="flex items-center justify-center w-14 h-14 transition-transform active:scale-90 hover:brightness-110">
+            <ExchangeIcon />
+          </button>
+          <span className="text-[11px] text-white font-medium tracking-wide text-center">Exchange</span>
         </div>
-        
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-4 px-1 -mx-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {catalogs.length > 0 ? catalogs.map((cat, i) => (
-            <div key={cat.id} className="relative min-w-[85vw] sm:min-w-[300px] shrink-0 snap-center overflow-hidden rounded-[24px] p-[1px] glow-accent">
-              <div className={`absolute inset-0 ${i % 2 === 0 ? 'gradient-accent' : 'bg-gradient-to-r from-purple-500 to-blue-500'}`}></div>
-              <div className="relative h-full w-full rounded-[23px] bg-surface p-1">
-                <div className={`absolute -left-6 -top-6 h-32 w-32 rounded-full ${i % 2 === 0 ? 'bg-accent-end/20' : 'bg-blue-500/20'} blur-2xl`}></div>
-                <div className={`absolute -right-6 bottom-10 h-32 w-32 rounded-full ${i % 2 === 0 ? 'bg-accent-start/20' : 'bg-purple-500/20'} blur-2xl`}></div>
-                
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-full rounded-t-[22px] bg-surface-2/60 py-3 text-center border-b border-border/50 backdrop-blur-sm">
-                    <h4 className="text-xl font-extrabold tracking-widest text-primary uppercase drop-shadow-md">{cat.name}</h4>
+        {/* Axiom Virtu Channel */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button className="flex items-center justify-center w-14 h-14 transition-transform active:scale-90 hover:brightness-110">
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-[9px] font-black text-black tracking-tighter">AV</span>
+            </div>
+          </button>
+          <span className="text-[11px] text-white font-medium tracking-wide text-center max-w-[80px] leading-tight">
+            Axiom Virtu Channel
+          </span>
+        </div>
+        {/* History */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button className="flex items-center justify-center w-14 h-14 transition-transform active:scale-90 hover:brightness-110">
+            <HistoryIcon />
+          </button>
+          <span className="text-[11px] text-white font-medium tracking-wide text-center">History</span>
+        </div>
+      </div>
+
+      {/* Horizontal Category Tabs */}
+      <div className="mb-6 overflow-x-auto scrollbar-none -mx-6 px-6">
+        <div className="flex gap-2.5 pb-2">
+          {categories.map((catName) => {
+            const isActive = activeCategory === catName
+            return (
+              <button
+                key={catName}
+                onClick={() => setActiveCategory(catName)}
+                className={`px-5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                  isActive
+                    ? 'bg-[#7F00FF] text-white shadow-lg shadow-[#7F00FF]/30 scale-102'
+                    : 'bg-white/5 border border-white/10 text-white/70 hover:bg-white/10'
+                }`}
+              >
+                {catName}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Decorative Diamond Section Header */}
+      <div className="relative flex items-center mb-6 mt-2 w-full">
+        <div className="flex flex-col w-full">
+          <div className="text-xl font-semibold tracking-wide text-white mb-2 pl-1">
+            {activeCategory}
+          </div>
+          <div className="relative flex items-center w-[60%]">
+            {/* Left empty diamond */}
+            <div className="w-2.5 h-2.5 rotate-45 border border-white bg-black shrink-0 -ml-1"></div>
+            {/* Horizontal divider line */}
+            <div className="flex-grow h-[1px] bg-white"></div>
+            {/* Right empty diamond */}
+            <div className="w-2.5 h-2.5 rotate-45 border border-white bg-black shrink-0 -mr-1"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Content Cards */}
+      <section className="pb-10">
+        {activeItems.length > 0 ? (
+          // Check layout type (single large card vs split list of cards)
+          !getCardDetail(activeItems[0].name).isMulti ? (
+            // Layout Kartu Tunggal (Nova Apex, Chrono Shift, Aether Pulse)
+            activeItems.map((item) => {
+              const details = getCardDetail(item.name)
+              return (
+                <div key={item.id} className="flex flex-col items-center">
+                  {/* Purple Banner Area */}
+                  <div className="w-full aspect-[1.8/1] bg-gradient-to-tr from-[#6C00D9] to-[#8C1AFF] rounded-[32px] mb-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-sm opacity-20 pointer-events-none"></div>
                   </div>
-                  
-                  <div className="w-full px-4 py-8 flex justify-center">
-                    <div className="relative w-[70%] max-w-[220px] aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 glow-accent group">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={cat.image_url} 
-                        alt={cat.name} 
-                        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700 ease-out" 
-                      />
-                      <div className="absolute bottom-3 left-0 right-0 text-center z-20">
-                        <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">{cat.level_name}</span>
+
+                  {/* Card Title */}
+                  <h2 className="text-xl font-bold tracking-widest text-white mb-5 uppercase text-center drop-shadow-md">
+                    {details.displayName}
+                  </h2>
+
+                  {/* Details Bullet List */}
+                  <ul className="text-white text-[13px] font-normal leading-relaxed tracking-wide space-y-2.5 pl-6 list-disc mb-6 max-w-xs self-start sm:self-center">
+                    <li>
+                      <span className="font-semibold">Start Capital :</span> {details.startCapital}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Ticket Purchase :</span> {details.ticketPurchase}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Asset Trading :</span> {details.assetTrading}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Contract Asset :</span> {details.contractAsset}
+                    </li>
+                    <li>
+                      <span className="font-semibold">Profit :</span> {details.profit}
+                    </li>
+                  </ul>
+
+                  {/* Buy Button */}
+                  <button className="bg-[#7F00FF] text-white font-bold tracking-widest text-xs uppercase px-12 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-[#7F00FF]/25 hover:brightness-110">
+                    BUY TICKET NOW
+                  </button>
+                </div>
+              )
+            })
+          ) : (
+            // Layout Kartu Ganda Bertumpuk (Axiom Core, Virtu Spark)
+            <div className="flex flex-col gap-6">
+              {activeItems.map((item) => {
+                const details = getCardDetail(item.name)
+                return (
+                  <div key={item.id} className="flex gap-4 items-start w-full bg-white/[0.02] border border-white/5 p-4 rounded-[28px] shadow-sm">
+                    {/* Left: Purple square placeholder */}
+                    <div className="w-28 h-28 bg-gradient-to-tr from-[#6C00D9] to-[#8C1AFF] rounded-[24px] flex-shrink-0 shadow-md"></div>
+                    
+                    {/* Right: details and button */}
+                    <div className="flex flex-col flex-grow min-w-0">
+                      <h3 className="text-sm font-bold tracking-wider text-white mb-2 uppercase">
+                        {details.displayName}
+                      </h3>
+                      
+                      <ul className="text-white text-[10px] font-normal leading-relaxed space-y-1.5 pl-4 list-disc mb-3">
+                        <li>
+                          <span className="font-semibold">Start Capital :</span> {details.startCapital}
+                        </li>
+                        <li>
+                          <span className="font-semibold">Ticket Purchase :</span> {details.ticketPurchase}
+                        </li>
+                        <li>
+                          <span className="font-semibold">Asset Trading :</span> {details.assetTrading}
+                        </li>
+                        <li>
+                          <span className="font-semibold">Contract Asset :</span> {details.contractAsset}
+                        </li>
+                        <li>
+                          <span className="font-semibold">Profit :</span> {details.profit}
+                        </li>
+                      </ul>
+                      
+                      <div>
+                        <button className="bg-[#7F00FF] text-white font-bold tracking-widest text-[9px] uppercase px-5 py-2 rounded-full transition-all active:scale-95 shadow-md shadow-[#7F00FF]/20 hover:brightness-110">
+                          BUY TICKET NOW
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  <div className="w-full px-5 pb-5 pt-2 flex flex-col items-center">
-                    <div className="mb-4 flex flex-col items-center w-full rounded-2xl bg-surface-2/40 border border-white/5 p-4 backdrop-blur-sm">
-                       <p className="text-[11px] font-semibold uppercase tracking-wider text-secondary mb-1">Est. Starting Capital</p>
-                       <p className="text-lg font-black text-primary">
-                         <span className={i % 2 === 0 ? 'text-info' : 'text-purple-400'}>{cat.capital_min}</span> 
-                         <span className="text-sm font-medium text-secondary mx-2">to</span> 
-                         <span className={i % 2 === 0 ? 'text-accent-end' : 'text-blue-400'}>{cat.capital_max}</span> 
-                         <span className="text-base ml-1">TON</span>
-                       </p>
-                    </div>
-
-                    <div className="mb-5 w-full rounded-2xl bg-surface-2/40 border border-white/5 p-4 backdrop-blur-sm">
-                       <h5 className="text-[11px] font-bold uppercase tracking-widest text-secondary mb-3 text-center border-b border-white/5 pb-2">Trading Schedule</h5>
-                       <div className="flex justify-between items-center mb-2">
-                         <span className="text-xs font-medium text-secondary">Ticket Purchase</span>
-                         <span className={`text-xs font-bold ${i % 2 === 0 ? 'text-info' : 'text-purple-400'}`}>{cat.ticket_time_start} - {cat.ticket_time_end} (UTC+7)</span>
-                       </div>
-                       <div className="flex justify-between items-center">
-                         <span className="text-xs font-medium text-secondary">Asset Trading</span>
-                         <span className={`text-xs font-bold ${i % 2 === 0 ? 'text-accent-end' : 'text-blue-400'}`}>{cat.trading_time_start} - {cat.trading_time_end} (UTC+7)</span>
-                       </div>
-                    </div>
-
-                    <button className={`w-full rounded-xl py-4 text-sm font-bold tracking-widest text-white uppercase shadow-lg transition-transform hover:brightness-110 active:scale-95 ${i % 2 === 0 ? 'gradient-accent' : 'bg-gradient-to-r from-purple-500 to-blue-500'}`}>
-                      Buy Ticket Now
-                    </button>
-                  </div>
-                </div>
-              </div>
+                )
+              })}
             </div>
-          )) : (
-            <div className="w-full text-center py-10 text-secondary">No active catalog found.</div>
-          )}
-        </div>
+          )
+        ) : (
+          <div className="w-full text-center py-10 text-secondary">
+            No items found in this category.
+          </div>
+        )}
       </section>
-
     </main>
   )
 }
