@@ -19,6 +19,9 @@ type AssetCatalogRow = {
   trading_time_end: string
   order_index: number
   is_active: boolean
+  contract_asset: string
+  profit: string
+  is_multi: boolean
   created_at?: string
   updated_at?: string
 }
@@ -35,6 +38,9 @@ interface FirestoreCatalogData {
   trading_time_end?: string
   order_index?: number
   is_active?: boolean
+  contract_asset?: string
+  profit?: string
+  is_multi?: boolean
   created_at?: unknown
   updated_at?: unknown
 }
@@ -93,6 +99,9 @@ export default function AdminCatalogPage() {
             trading_time_end: data.trading_time_end ?? '16:00',
             order_index: Number(data.order_index ?? 0),
             is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
+            contract_asset: data.contract_asset ?? '1 Day',
+            profit: data.profit ?? '10%',
+            is_multi: data.is_multi !== undefined ? Boolean(data.is_multi) : false,
             created_at: formatFirestoreDate(data.created_at),
             updated_at: formatFirestoreDate(data.updated_at),
           } as AssetCatalogRow
@@ -145,6 +154,9 @@ export default function AdminCatalogPage() {
           trading_time_end: catalog.trading_time_end,
           order_index: catalog.order_index,
           is_active: catalog.is_active,
+          contract_asset: catalog.contract_asset,
+          profit: catalog.profit,
+          is_multi: catalog.is_multi,
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         })
@@ -169,6 +181,9 @@ export default function AdminCatalogPage() {
           trading_time_end: catalog.trading_time_end,
           order_index: catalog.order_index,
           is_active: catalog.is_active,
+          contract_asset: catalog.contract_asset,
+          profit: catalog.profit,
+          is_multi: catalog.is_multi,
           updated_at: serverTimestamp(),
         })
 
@@ -200,6 +215,9 @@ export default function AdminCatalogPage() {
       trading_time_end: '16:00',
       order_index: catalogs.length,
       is_active: true,
+      contract_asset: '1 Day',
+      profit: '10%',
+      is_multi: false,
     }
 
     const mockNew = {
@@ -328,13 +346,46 @@ export default function AdminCatalogPage() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  checked={catalog.is_active} 
-                  onChange={(e) => handleInputChange(catalog.id, 'is_active', e.target.checked)}
-                />
-                <label className="text-sm text-secondary">Is Active</label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-secondary mb-1 block">Contract Asset (e.g., 1 Day)</label>
+                  <input 
+                    type="text" 
+                    value={catalog.contract_asset} 
+                    onChange={(e) => handleInputChange(catalog.id, 'contract_asset', e.target.value)}
+                    className="w-full bg-surface-2 p-2 rounded border border-white/5 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-secondary mb-1 block">Profit (e.g., 10%)</label>
+                  <input 
+                    type="text" 
+                    value={catalog.profit} 
+                    onChange={(e) => handleInputChange(catalog.id, 'profit', e.target.value)}
+                    className="w-full bg-surface-2 p-2 rounded border border-white/5 text-sm"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    checked={catalog.is_active} 
+                    onChange={(e) => handleInputChange(catalog.id, 'is_active', e.target.checked)}
+                  />
+                  <label className="text-sm text-secondary">Is Active</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    checked={catalog.is_multi} 
+                    onChange={(e) => handleInputChange(catalog.id, 'is_multi', e.target.checked)}
+                  />
+                  <label className="text-sm text-secondary">Use Multi-Card Layout (Split)</label>
+                </div>
               </div>
             </div>
 

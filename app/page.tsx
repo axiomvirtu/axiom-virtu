@@ -22,6 +22,9 @@ type AssetCatalogRow = {
   trading_time_end: string
   order_index: number
   is_active: boolean
+  contract_asset: string
+  profit: string
+  is_multi: boolean
   created_at: string
   updated_at: string
 }
@@ -48,6 +51,9 @@ interface FirestoreCatalog {
   trading_time_end?: string
   order_index?: number | string
   is_active?: boolean
+  contract_asset?: string
+  profit?: string
+  is_multi?: boolean
   created_at?: unknown
   updated_at?: unknown
 }
@@ -71,7 +77,7 @@ function ExchangeIcon() {
       {/* Green circular loop arrows */}
       <path d="M12 20C12 14.4772 16.4772 10 22 10C24.3166 10 26.4411 10.7874 28.1428 12.1111" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" />
       <path d="M16 12L22 10L16 6" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      
+
       <path d="M36 28C36 33.5228 31.5228 38 26 38C23.6834 38 21.5589 37.2126 19.8572 35.8889" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" />
       <path d="M32 36L26 38L32 42" stroke="#00FF00" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
 
@@ -120,116 +126,7 @@ function getCategoryName(levelName: string, name: string): string {
   return 'Virtu Spark'
 }
 
-interface CardDetail {
-  displayName: string
-  startCapital: string
-  ticketPurchase: string
-  assetTrading: string
-  contractAsset: string
-  profit: string
-  isMulti: boolean
-}
-
-const CATEGORY_DETAILS: Record<string, CardDetail> = {
-  'Apex Titan': {
-    displayName: 'APEX TITAN',
-    startCapital: '800 - 2500 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '21:00 - 23:00 ( UTC+7 )',
-    contractAsset: '1 Month',
-    profit: '8%',
-    isMulti: false
-  },
-  'Chronos Vortex': {
-    displayName: 'CHRONOS VORTEX',
-    startCapital: '300 - 799.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '16:00 - 18:00 ( UTC+7 )',
-    contractAsset: '1 Week',
-    profit: '6%',
-    isMulti: false
-  },
-  'Pulse Horizon': {
-    displayName: 'PULSE HORIZON',
-    startCapital: '100 - 299.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '15:00 - 17:00 ( UTC+7 )',
-    contractAsset: '3 Day',
-    profit: '8%',
-    isMulti: false
-  },
-  'Core Nexus': {
-    displayName: 'AXIOM NEXUS',
-    startCapital: '40 - 99.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '14:00 - 16:00 ( UTC+7 )',
-    contractAsset: '1 Day',
-    profit: '10%',
-    isMulti: true
-  },
-  'Core Prime': {
-    displayName: 'AXIOM PRIME',
-    startCapital: '40 - 99.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '20:00 - 22:00 ( UTC+7 )',
-    contractAsset: '1 Day',
-    profit: '10%',
-    isMulti: true
-  },
-  'Spark Alpha': {
-    displayName: 'SPARK ALPHA',
-    startCapital: '10 - 39.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '12:00 - 14:00 ( UTC+7 )',
-    contractAsset: '1 Day',
-    profit: '10%',
-    isMulti: true
-  },
-  'Spark Beta': {
-    displayName: 'SPARK BETA',
-    startCapital: '10 - 39.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '18:00 - 20:00 ( UTC+7 )',
-    contractAsset: '1 Day',
-    profit: '10%',
-    isMulti: true
-  }
-}
-
-function getCardDetail(name: string): CardDetail {
-  const n = name.toLowerCase()
-  if (n.includes('apex') || n.includes('titan')) {
-    return CATEGORY_DETAILS['Apex Titan']
-  }
-  if (n.includes('vortex') || n.includes('chronos')) {
-    return CATEGORY_DETAILS['Chronos Vortex']
-  }
-  if (n.includes('horizon') || n.includes('pulse')) {
-    return CATEGORY_DETAILS['Pulse Horizon']
-  }
-  if (n.includes('nexus') || (n.includes('core') && !n.includes('prime') && !n.includes('v2'))) {
-    return CATEGORY_DETAILS['Core Nexus']
-  }
-  if (n.includes('prime') || (n.includes('core') && n.includes('v2'))) {
-    return CATEGORY_DETAILS['Core Prime']
-  }
-  if (n.includes('alpha') || (n.includes('spark') && !n.includes('beta') && !n.includes('v2'))) {
-    return CATEGORY_DETAILS['Spark Alpha']
-  }
-  if (n.includes('beta') || (n.includes('spark') && n.includes('v2'))) {
-    return CATEGORY_DETAILS['Spark Beta']
-  }
-  
-  return {
-    displayName: name.toUpperCase(),
-    startCapital: '10 - 39.99 TON',
-    ticketPurchase: '09:00 - 11:00 ( UTC+7 )',
-    assetTrading: '12:00 - 14:00 ( UTC+7 )',
-    contractAsset: '1 Day',
-    profit: '10%',
-    isMulti: true
-  }
-}
+// CATEGORY_DETAILS has been replaced by dynamic database fields.
 
 const fallbackCatalogs: AssetCatalogRow[] = [
   {
@@ -245,6 +142,9 @@ const fallbackCatalogs: AssetCatalogRow[] = [
     trading_time_end: '14:00',
     order_index: 0,
     is_active: true,
+    contract_asset: '1 Day',
+    profit: '10%',
+    is_multi: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -261,6 +161,9 @@ const fallbackCatalogs: AssetCatalogRow[] = [
     trading_time_end: '20:00',
     order_index: 1,
     is_active: true,
+    contract_asset: '1 Day',
+    profit: '10%',
+    is_multi: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -277,54 +180,9 @@ const fallbackCatalogs: AssetCatalogRow[] = [
     trading_time_end: '16:00',
     order_index: 2,
     is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'mock-axiom-prime',
-    name: 'Core Prime',
-    image_url: '/images/axiom-core.png',
-    level_name: 'Axiom Core - Sesi 2',
-    capital_min: 40.00,
-    capital_max: 99.99,
-    ticket_time_start: '09:00',
-    ticket_time_end: '11:00',
-    trading_time_start: '20:00',
-    trading_time_end: '22:00',
-    order_index: 3,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'mock-pulse-horizon',
-    name: 'Pulse Horizon',
-    image_url: '/images/aether-pulse.png',
-    level_name: 'Aether Pulse',
-    capital_min: 100.00,
-    capital_max: 299.99,
-    ticket_time_start: '09:00',
-    ticket_time_end: '11:00',
-    trading_time_start: '15:00',
-    trading_time_end: '17:00',
-    order_index: 4,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'mock-chronos-vortex',
-    name: 'Chronos Vortex',
-    image_url: '/images/chronos-shift.png',
-    level_name: 'Chronos Shift',
-    capital_min: 300.00,
-    capital_max: 799.99,
-    ticket_time_start: '09:00',
-    ticket_time_end: '11:00',
-    trading_time_start: '16:00',
-    trading_time_end: '18:00',
-    order_index: 5,
-    is_active: true,
+    contract_asset: '1 Day',
+    profit: '10%',
+    is_multi: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -341,6 +199,9 @@ const fallbackCatalogs: AssetCatalogRow[] = [
     trading_time_end: '23:00',
     order_index: 6,
     is_active: true,
+    contract_asset: '1 Month',
+    profit: '8%',
+    is_multi: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
@@ -356,7 +217,10 @@ export default function Dashboard() {
   const [connectingWallet, setConnectingWallet] = useState(false)
   const [walletConnectError, setWalletConnectError] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string>('Nova Apex')
-  
+  const [buyModalOpen, setBuyModalOpen] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const [buyResult, setBuyResult] = useState<'success' | 'fail' | null>(null)
+
   const connectedWallet = walletAddress ?? dbUser?.wallet_address ?? null
   const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
 
@@ -440,6 +304,32 @@ export default function Dashboard() {
     runLoadDashboardData()
   }, [isReady, firebaseReady, isAuthenticated, isDevBypass, user, router])
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (buyModalOpen && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1)
+      }, 1000)
+    } else if (buyModalOpen && countdown === 0 && buyResult === null) {
+      // Simulate war outcome
+      const isLucky = Math.random() > 0.5 // 50% chance
+      setBuyResult(isLucky ? 'success' : 'fail')
+    }
+    return () => clearTimeout(timer)
+  }, [buyModalOpen, countdown, buyResult])
+
+  const handleBuyTicket = () => {
+    setBuyModalOpen(true)
+    setCountdown(10)
+    setBuyResult(null)
+  }
+
+  const closeBuyModal = () => {
+    setBuyModalOpen(false)
+    setCountdown(0)
+    setBuyResult(null)
+  }
+
   async function handleConnectWallet() {
     if (!dbUser) return
 
@@ -482,10 +372,10 @@ export default function Dashboard() {
     )
   }
 
-  // Group and filter items based on the active tab/category
-  const activeItems = catalogs.filter(
-    (item) => getCategoryName(item.level_name, item.name) === activeCategory
-  )
+  // Group and filter items based on the active tab/category, and sort from smallest to largest price
+  const activeItems = catalogs
+    .filter((item) => getCategoryName(item.level_name, item.name) === activeCategory)
+    .sort((a, b) => a.capital_min - b.capital_min)
 
   const usernameText = (dbUser?.username || user?.username || dbUser?.first_name || user?.first_name || 'username').toLowerCase()
 
@@ -510,10 +400,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Settings gear link */}
-        <Link 
-          href="/admin/catalog" 
+        <Link
+          href="/admin/catalog"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white shadow-sm transition-all active:scale-90"
         >
           ⚙️
@@ -583,11 +473,10 @@ export default function Dashboard() {
               <button
                 key={catName}
                 onClick={() => setActiveCategory(catName)}
-                className={`px-5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
-                  isActive
+                className={`px-5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${isActive
                     ? 'bg-[#7F00FF] text-white shadow-lg shadow-[#7F00FF]/30 scale-102'
                     : 'bg-white/5 border border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 {catName}
               </button>
@@ -617,43 +506,43 @@ export default function Dashboard() {
       <section className="pb-10">
         {activeItems.length > 0 ? (
           // Check layout type (single large card vs split list of cards)
-          !getCardDetail(activeItems[0].name).isMulti ? (
+          !activeItems[0].is_multi ? (
             // Layout Kartu Tunggal (Nova Apex, Chrono Shift, Aether Pulse)
             activeItems.map((item) => {
-              const details = getCardDetail(item.name)
               return (
                 <div key={item.id} className="flex flex-col items-center">
-                  {/* Purple Banner Area */}
-                  <div className="w-full aspect-[1.8/1] bg-gradient-to-tr from-[#6C00D9] to-[#8C1AFF] rounded-[32px] mb-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute inset-0 bg-white/5 backdrop-blur-sm opacity-20 pointer-events-none"></div>
+                  {/* Cyberpunk 3D Purple Banner Area */}
+                  <div className="w-full aspect-[1.8/1] rounded-[32px] mb-6 relative overflow-hidden bg-[#7F00FF] border-2 border-[#b026ff] shadow-[0_0_20px_rgba(176,38,255,0.6),inset_0_0_30px_rgba(255,255,255,0.3)] transform transition-transform duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(176,38,255,0.8),inset_0_0_40px_rgba(255,255,255,0.4)]">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none mix-blend-overlay"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
                   </div>
 
                   {/* Card Title */}
-                  <h2 className="text-xl font-bold tracking-widest text-white mb-5 uppercase text-center drop-shadow-md">
-                    {details.displayName}
+                  <h2 className="text-xl font-bold tracking-widest text-white mb-5 uppercase text-center drop-shadow-[0_0_10px_rgba(176,38,255,0.8)]">
+                    {item.name}
                   </h2>
 
                   {/* Details Bullet List */}
                   <ul className="text-white text-[13px] font-normal leading-relaxed tracking-wide space-y-2.5 pl-6 list-disc mb-6 max-w-xs self-start sm:self-center">
                     <li>
-                      <span className="font-semibold">Start Capital :</span> {details.startCapital}
+                      <span className="font-semibold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">Start Capital :</span> {item.capital_min} - {item.capital_max} TON
                     </li>
                     <li>
-                      <span className="font-semibold">Ticket Purchase :</span> {details.ticketPurchase}
+                      <span className="font-semibold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">Ticket Purchase :</span> {item.ticket_time_start} - {item.ticket_time_end} ( UTC+7 )
                     </li>
                     <li>
-                      <span className="font-semibold">Asset Trading :</span> {details.assetTrading}
+                      <span className="font-semibold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">Asset Trading :</span> {item.trading_time_start} - {item.trading_time_end} ( UTC+7 )
                     </li>
                     <li>
-                      <span className="font-semibold">Contract Asset :</span> {details.contractAsset}
+                      <span className="font-semibold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">Contract Asset :</span> {item.contract_asset}
                     </li>
                     <li>
-                      <span className="font-semibold">Profit :</span> {details.profit}
+                      <span className="font-semibold text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">Profit :</span> {item.profit}
                     </li>
                   </ul>
 
                   {/* Buy Button */}
-                  <button className="bg-[#7F00FF] text-white font-bold tracking-widest text-xs uppercase px-12 py-3 rounded-full transition-all active:scale-95 shadow-lg shadow-[#7F00FF]/25 hover:brightness-110">
+                  <button onClick={handleBuyTicket} className="bg-gradient-to-r from-[#7F00FF] to-[#b026ff] text-white font-bold tracking-widest text-xs uppercase px-12 py-3 rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(176,38,255,0.8)] hover:shadow-[0_0_25px_rgba(176,38,255,1)] hover:brightness-125 border border-white/20">
                     BUY TICKET NOW
                   </button>
                 </div>
@@ -663,38 +552,40 @@ export default function Dashboard() {
             // Layout Kartu Ganda Bertumpuk (Axiom Core, Virtu Spark)
             <div className="flex flex-col gap-6">
               {activeItems.map((item) => {
-                const details = getCardDetail(item.name)
                 return (
-                  <div key={item.id} className="flex gap-4 items-start w-full bg-white/[0.02] border border-white/5 p-4 rounded-[28px] shadow-sm">
-                    {/* Left: Purple square placeholder */}
-                    <div className="w-28 h-28 bg-gradient-to-tr from-[#6C00D9] to-[#8C1AFF] rounded-[24px] flex-shrink-0 shadow-md"></div>
+                  <div key={item.id} className="flex gap-4 items-start w-full bg-[#0a0a0c] border border-[#7F00FF]/30 p-4 rounded-[28px] shadow-[0_4px_20px_rgba(127,0,255,0.15)] relative overflow-hidden">
+                    {/* Cyberpunk Grid Background */}
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+                    
+                    {/* Left: Cyberpunk Purple square placeholder */}
+                    <div className="w-28 h-28 bg-[#7F00FF] border border-[#b026ff] rounded-[24px] flex-shrink-0 shadow-[0_0_15px_rgba(176,38,255,0.5),inset_0_0_20px_rgba(255,255,255,0.2)] relative z-10"></div>
                     
                     {/* Right: details and button */}
-                    <div className="flex flex-col flex-grow min-w-0">
-                      <h3 className="text-sm font-bold tracking-wider text-white mb-2 uppercase">
-                        {details.displayName}
+                    <div className="flex flex-col flex-grow min-w-0 relative z-10">
+                      <h3 className="text-sm font-bold tracking-wider text-white mb-2 uppercase drop-shadow-[0_0_8px_rgba(176,38,255,0.8)]">
+                        {item.name}
                       </h3>
                       
                       <ul className="text-white text-[10px] font-normal leading-relaxed space-y-1.5 pl-4 list-disc mb-3">
                         <li>
-                          <span className="font-semibold">Start Capital :</span> {details.startCapital}
+                          <span className="font-semibold text-cyan-400">Start Capital :</span> {item.capital_min} - {item.capital_max} TON
                         </li>
                         <li>
-                          <span className="font-semibold">Ticket Purchase :</span> {details.ticketPurchase}
+                          <span className="font-semibold text-cyan-400">Ticket Purchase :</span> {item.ticket_time_start} - {item.ticket_time_end} ( UTC+7 )
                         </li>
                         <li>
-                          <span className="font-semibold">Asset Trading :</span> {details.assetTrading}
+                          <span className="font-semibold text-cyan-400">Asset Trading :</span> {item.trading_time_start} - {item.trading_time_end} ( UTC+7 )
                         </li>
                         <li>
-                          <span className="font-semibold">Contract Asset :</span> {details.contractAsset}
+                          <span className="font-semibold text-cyan-400">Contract Asset :</span> {item.contract_asset}
                         </li>
                         <li>
-                          <span className="font-semibold">Profit :</span> {details.profit}
+                          <span className="font-semibold text-cyan-400">Profit :</span> {item.profit}
                         </li>
                       </ul>
                       
                       <div>
-                        <button className="bg-[#7F00FF] text-white font-bold tracking-widest text-[9px] uppercase px-5 py-2 rounded-full transition-all active:scale-95 shadow-md shadow-[#7F00FF]/20 hover:brightness-110">
+                        <button onClick={handleBuyTicket} className="bg-gradient-to-r from-[#7F00FF] to-[#b026ff] text-white font-bold tracking-widest text-[9px] uppercase px-5 py-2 rounded-full transition-all active:scale-95 shadow-[0_0_10px_rgba(176,38,255,0.8)] hover:shadow-[0_0_15px_rgba(176,38,255,1)] hover:brightness-125 border border-white/20">
                           BUY TICKET NOW
                         </button>
                       </div>
@@ -710,6 +601,48 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      {/* Countdown / War Modal */}
+      {buyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
+          <div className="bg-[#0a0a0c] border border-[#7F00FF] p-8 rounded-[32px] w-full max-w-sm text-center shadow-[0_0_40px_rgba(127,0,255,0.3)] relative overflow-hidden flex flex-col items-center">
+            {/* Cyberpunk Grid */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+            
+            {buyResult === null ? (
+              <>
+                <h3 className="text-xl font-bold text-white mb-6 tracking-widest uppercase drop-shadow-[0_0_8px_rgba(176,38,255,0.8)]">Waiting for Allocation</h3>
+                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-[#b026ff] drop-shadow-[0_0_15px_rgba(176,38,255,1)] mb-8">
+                  {countdown}
+                </div>
+                <p className="text-xs text-cyan-400 tracking-wide">Processing your request...</p>
+              </>
+            ) : buyResult === 'success' ? (
+              <>
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(34,197,94,0.6)]">
+                  <span className="text-4xl">✓</span>
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">SUCCESS</h3>
+                <p className="text-sm text-white/80 mb-8">You successfully got the product!</p>
+                <button onClick={closeBuyModal} className="w-full bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold tracking-widest text-xs uppercase px-8 py-3 rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(34,197,94,0.6)]">
+                  CLOSE
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(239,68,68,0.6)]">
+                  <span className="text-4xl">✗</span>
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 tracking-widest uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">SORRY NOT LUCKY</h3>
+                <p className="text-sm text-white/80 mb-8">Out of stock or allocation failed.</p>
+                <button onClick={closeBuyModal} className="w-full bg-gradient-to-r from-red-500 to-rose-500 text-white font-bold tracking-widest text-xs uppercase px-8 py-3 rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+                  CLOSE
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
