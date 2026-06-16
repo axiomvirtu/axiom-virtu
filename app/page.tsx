@@ -281,6 +281,9 @@ export default function Dashboard() {
             trading_time_end: data.trading_time_end ?? '16:00',
             order_index: Number(data.order_index ?? i),
             is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
+            contract_asset: data.contract_asset ?? '1 Day',
+            profit: data.profit ?? '10%',
+            is_multi: data.is_multi !== undefined ? Boolean(data.is_multi) : false,
             created_at: formatFirestoreDate(data.created_at),
             updated_at: formatFirestoreDate(data.updated_at),
           }
