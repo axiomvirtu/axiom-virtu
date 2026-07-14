@@ -264,7 +264,7 @@ export default function AdminCatalogPage() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-secondary mb-1 block">Min Capital (TON)</label>
+                  <label className="text-xs text-secondary mb-1 block">Min Capital (USDT)</label>
                   <input 
                     type="number" 
                     value={catalog.capital_min} 
@@ -273,7 +273,7 @@ export default function AdminCatalogPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-secondary mb-1 block">Max Capital (TON)</label>
+                  <label className="text-xs text-secondary mb-1 block">Max Capital (USDT)</label>
                   <input 
                     type="number" 
                     value={catalog.capital_max} 

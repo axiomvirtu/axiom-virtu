@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTonConnect } from '@/hooks/useTonConnect'
-import { useUsdtPayment, USDT_MASTER_ADDRESS } from '@/hooks/useUsdtPayment'
+// import removed as we use native TON payment based on USDT value
 import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { Header } from './components/Header'
@@ -69,7 +69,7 @@ export default function Dashboard() {
   const router = useRouter()
   const { user, isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
   const { walletAddress, connectTonkeeper, error: walletError, sendTransaction } = useTonConnect()
-  const { getJettonWalletAddress, buildJettonTransferPayload } = useUsdtPayment()
+
   const [dbUser, setDbUser] = useState<DbUser | null>(null)
   const [catalogs, setCatalogs] = useState<AssetCatalogRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -213,21 +213,33 @@ export default function Dashboard() {
     setCountdown(10) // Tampilkan UI loading sebentar (opsional)
 
     try {
-      // 1. Dapatkan alamat Jetton Wallet milik user (untuk USDT)
-      const userJettonWallet = await getJettonWalletAddress(USDT_MASTER_ADDRESS, connectedWallet)
+      const amountUsdt = item.capital_min
+
+      // 1. Fetch live TON price in USDT
+      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT')
+      if (!response.ok) {
+        throw new Error('Gagal mengambil harga pasar TON.')
+      }
+      const data = await response.json()
+      const tonPrice = parseFloat(data.price)
       
-      // 2. Buat payload transfer Jetton (USDT)
-      const amountUsdt = item.capital_min.toString() // Kita pakai harga minimum sebagai harga tiket
-      const payloadBoc = buildJettonTransferPayload(adminWallet, amountUsdt)
+      if (!tonPrice || isNaN(tonPrice)) {
+        throw new Error('Gagal memvalidasi harga TON saat ini.')
+      }
+
+      // 2. Calculate TON amount
+      const amountTon = amountUsdt / tonPrice
       
-      // 3. Bangun struktur transaksi TonConnect
+      // 3. Convert to nanoTON (1 TON = 1,000,000,000 nanoTON)
+      const nanoTonAmount = BigInt(Math.floor(amountTon * 1e9)).toString()
+      
+      // 4. Bangun struktur transaksi TonConnect (Native TON Transfer)
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 60 * 5, // 5 menit expired
         messages: [
           {
-            address: userJettonWallet, // Pesan dikirim ke Jetton Wallet user
-            amount: '50000000', // 0.05 TON untuk forward fee dan eksekusi contract
-            payload: payloadBoc
+            address: adminWallet, // Dikirim langsung ke wallet Admin
+            amount: nanoTonAmount // Jumlah TON yang setara dengan USDT
           }
         ]
       }
