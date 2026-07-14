@@ -12,6 +12,8 @@
     "check-env": "node scripts/check-env.js"
   },
   "dependencies": {
+    "@ton/core": "^0.63.1",
+    "@ton/ton": "^16.3.0",
     "@tonconnect/sdk": "^3.4.1",
     "firebase": "^12.14.0",
     "firebase-admin": "^13.10.0",

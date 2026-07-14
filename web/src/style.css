@@ -1,0 +1,40 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+}
+
+.dark body {
+  background-color: #0a0a0c;
+  color: white;
+}
+
+/* Sidebar Collapse Styles */
+aside {
+  transition: width 0.3s ease, transform 0.3s ease;
+}
+@media (min-width: 768px) {
+  aside.collapsed {
+    width: 5rem !important; /* equivalent to w-20 */
+  }
+  aside.collapsed .sidebar-text {
+    display: none !important;
+  }
+  aside.collapsed .sidebar-header {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: center !important;
+  }
+  aside.collapsed nav a,
+  aside.collapsed #logout-btn {
+    justify-content: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  aside.collapsed nav a svg,
+  aside.collapsed #logout-btn svg {
+    margin: 0 !important;
+  }
+  aside.collapsed #desktop-menu-btn svg {
+    transform: rotate(180deg);
+  }
+}

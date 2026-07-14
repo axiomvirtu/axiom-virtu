@@ -1,13 +1,13 @@
 /**
- * middleware.ts
+ * proxy.ts
  *
- * Next.js Middleware — dijalankan di Edge Runtime sebelum setiap request.
+ * Next.js Proxy — dijalankan di Edge Runtime sebelum setiap request.
  *
  * Saat ini merupakan placeholder kosong sebagai persiapan migrasi ke Firebase.
  */
 import { type NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Hanya pass-through untuk sementara
   return NextResponse.next({ request })
 }

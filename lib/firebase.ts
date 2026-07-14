@@ -13,13 +13,18 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? '',
 }
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+let app: ReturnType<typeof initializeApp> | undefined
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+} catch (error) {
+  console.warn('Firebase initialization error', error)
+}
 
 let analytics: ReturnType<typeof getAnalytics> | null = null
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && app) {
   isSupported()
     .then((supported) => {
-      if (supported) {
+      if (supported && app) {
         analytics = getAnalytics(app)
       }
     })
@@ -28,7 +33,16 @@ if (typeof window !== 'undefined') {
     })
 }
 
-const auth = typeof window !== 'undefined' ? getAuth(app) : null
-const db = typeof window !== 'undefined' ? getFirestore(app) : null
+let auth: ReturnType<typeof getAuth> | null = null
+let db: ReturnType<typeof getFirestore> | null = null
+
+if (typeof window !== 'undefined' && app && firebaseConfig.apiKey) {
+  try {
+    auth = getAuth(app)
+    db = getFirestore(app)
+  } catch (error) {
+    console.warn('Firebase services initialization error', error)
+  }
+}
 
 export { app, analytics, auth, db, firebaseConfig }

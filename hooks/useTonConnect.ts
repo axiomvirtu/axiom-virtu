@@ -9,6 +9,7 @@ export interface UseTonConnectReturn {
   walletAddress: string | null
   error: string | null
   connectTonkeeper: () => Promise<string | null>
+  sendTransaction: (tx: any) => Promise<any>
 }
 
 export function useTonConnect(): UseTonConnectReturn {
@@ -81,11 +82,19 @@ export function useTonConnect(): UseTonConnectReturn {
     return address
   }, [tonConnect])
 
+  const sendTransaction = useCallback(async (tx: any) => {
+    if (!tonConnect) {
+      throw new Error('TonConnect belum siap')
+    }
+    return await tonConnect.sendTransaction(tx)
+  }, [tonConnect])
+
   return {
     isReady,
     status,
     walletAddress,
     error,
     connectTonkeeper,
+    sendTransaction,
   }
 }
