@@ -109,9 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const capitalMin = data.capital_min ?? data.capitalLimit ?? 0;
       const capitalMax = data.capital_max ?? data.capitalLimit ?? 0;
-      const capitalDisplay = capitalMin === capitalMax 
-        ? `${capitalMin.toLocaleString()} USDT` 
-        : `Min: ${capitalMin.toLocaleString()} - Max: ${capitalMax.toLocaleString()} USDT`;
+      const capitalDisplay = `${capitalMin.toLocaleString()} USDT`;
 
       const tr = document.createElement('tr');
       tr.className = 'border-b border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors';

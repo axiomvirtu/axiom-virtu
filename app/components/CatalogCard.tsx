@@ -74,7 +74,7 @@ export function CatalogCard({ item, onBuy, categoryName }: CatalogCardProps) {
             <li className="relative">
               <span className="absolute -left-5 top-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
               <span className="text-cyan-300 mr-2 drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Start Capital:</span> 
-              <span className="text-white">Min: {item.capital_min} - Max: {item.capital_max} USDT</span>
+              <span className="text-white">{item.capital_min} USDT</span>
             </li>
             <li className="relative">
               <span className="absolute -left-5 top-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_#22d3ee]"></span>
@@ -124,7 +124,7 @@ export function CatalogCard({ item, onBuy, categoryName }: CatalogCardProps) {
         <ul className="text-white/70 text-[11px] font-medium leading-relaxed space-y-1.5 pl-3 list-none mb-3.5">
           <li className="relative">
             <span className="absolute -left-3 top-1 w-1 h-1 rounded-full bg-cyan-400"></span>
-            <span className="text-cyan-400">Capital:</span> <span className="text-white">Min: {item.capital_min} - Max: {item.capital_max} USDT</span>
+            <span className="text-cyan-400">Capital:</span> <span className="text-white">{item.capital_min} USDT</span>
           </li>
           <li className="relative">
             <span className="absolute -left-3 top-1 w-1 h-1 rounded-full bg-cyan-400"></span>

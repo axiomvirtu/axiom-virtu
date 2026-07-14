@@ -263,22 +263,17 @@ export default function AdminCatalogPage() {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-secondary mb-1 block">Min Capital (USDT)</label>
+                <div className="col-span-2">
+                  <label className="text-xs text-secondary mb-1 block">Harga / Kapital (USDT)</label>
                   <input 
                     type="number" 
                     value={catalog.capital_min} 
-                    onChange={(e) => handleInputChange(catalog.id, 'capital_min', parseFloat(e.target.value))}
-                    className="w-full bg-surface-2 p-2 rounded border border-white/5 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-secondary mb-1 block">Max Capital (USDT)</label>
-                  <input 
-                    type="number" 
-                    value={catalog.capital_max} 
-                    onChange={(e) => handleInputChange(catalog.id, 'capital_max', parseFloat(e.target.value))}
-                    className="w-full bg-surface-2 p-2 rounded border border-white/5 text-sm"
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      const updated = { ...catalog, capital_min: val, capital_max: val };
+                      setCatalogs(prev => prev.map(c => c.id === catalog.id ? updated : c));
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-white text-sm outline-none focus:border-cyan-500 transition-colors"
                   />
                 </div>
               </div>
