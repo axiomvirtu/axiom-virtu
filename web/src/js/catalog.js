@@ -46,14 +46,17 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const name = document.getElementById('cat-name').value;
       const desc = document.getElementById('cat-desc').value;
-      const limit = Number(document.getElementById('cat-limit').value);
+      const limitMin = Number(document.getElementById('cat-limit-min').value);
+      const limitMax = Number(document.getElementById('cat-limit-max').value);
       const status = document.getElementById('cat-status').value;
 
       if (editId) {
         await updateDoc(doc(db, 'asset_catalogs', editId), {
           name,
           description: desc,
-          capitalLimit: limit,
+          capital_min: limitMin,
+          capital_max: limitMax,
+          capitalLimit: limitMin, // Fallback for old compatibility
           status,
           updatedAt: new Date().toISOString()
         });
@@ -63,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         await addDoc(collection(db, 'asset_catalogs'), {
           name,
           description: desc,
-          capitalLimit: limit,
+          capital_min: limitMin,
+          capital_max: limitMax,
+          capitalLimit: limitMin, // Fallback for old compatibility
           status,
           createdAt: new Date().toISOString()
         });
@@ -102,11 +107,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<span class="px-2.5 py-1 rounded-full bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20">Aktif</span>`
         : `<span class="px-2.5 py-1 rounded-full bg-gray-500/10 text-gray-400 text-xs font-medium border border-gray-500/20">Draft</span>`;
 
+      const capitalMin = data.capital_min ?? data.capitalLimit ?? 0;
+      const capitalMax = data.capital_max ?? data.capitalLimit ?? 0;
+      const capitalDisplay = capitalMin === capitalMax 
+        ? `${capitalMin.toLocaleString()} TON` 
+        : `${capitalMin.toLocaleString()} - ${capitalMax.toLocaleString()} TON`;
+
       const tr = document.createElement('tr');
       tr.className = 'border-b border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors';
       tr.innerHTML = `
         <td class="py-4 px-6 text-sm font-medium text-white">${data.name}</td>
-        <td class="py-4 px-6 text-sm text-gray-400 font-mono">$${data.capitalLimit.toLocaleString()}</td>
+        <td class="py-4 px-6 text-sm text-gray-400 font-mono">${capitalDisplay}</td>
         <td class="py-4 px-6 text-sm">${statusBadge}</td>
         <td class="py-4 px-6 text-sm text-right">
           <div class="flex items-center justify-end gap-2" id="action-td-${id}"></div>
@@ -122,9 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
       editBtn.addEventListener('click', () => {
         editId = id;
         document.getElementById('cat-name').value = data.name;
-        document.getElementById('cat-desc').value = data.description;
-        document.getElementById('cat-limit').value = data.capitalLimit;
-        document.getElementById('cat-status').value = data.status;
+        document.getElementById('cat-desc').value = data.description || '';
+        document.getElementById('cat-limit-min').value = data.capital_min ?? data.capitalLimit ?? 0;
+        document.getElementById('cat-limit-max').value = data.capital_max ?? data.capitalLimit ?? 0;
+        document.getElementById('cat-status').value = data.status || 'active';
         if (modalTitle) modalTitle.innerText = 'Edit Katalog';
         btnSave.innerText = 'Perbarui Katalog';
         modalOverlay.classList.remove('hidden');
