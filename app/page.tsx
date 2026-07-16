@@ -231,7 +231,7 @@ export default function Dashboard() {
       
       // [MODE TESTING] Jika tidak ada wallet yang terkoneksi
       if (!connectedWallet) {
-        alert(\`[TESTING MODE] Simulasi Sukses!\\n\\nHarga Paket: \${amountUsdt} USDT\\nHarga 1 TON saat ini: $\${tonPrice.toFixed(2)}\\nTagihan Terkonversi: \${amountTon.toFixed(4)} TON\\n\\n(Fitur wallet sedang di-bypass untuk testing)\`);
+        alert(`[TESTING MODE] Simulasi Sukses!\n\nHarga Paket: ${amountUsdt} USDT\nHarga 1 TON saat ini: $${tonPrice.toFixed(2)}\nTagihan Terkonversi: ${amountTon.toFixed(4)} TON\n\n(Fitur wallet sedang di-bypass untuk testing)`);
         setBuyResult('success');
         setCountdown(0);
         return;
