@@ -48,8 +48,10 @@ export async function POST(req: NextRequest) {
 
       await userRef.set(userData, { merge: true })
 
+      const isAdmin = process.env.NEXT_PUBLIC_ADMIN_IDS?.split(',').includes(telegramId) || telegramId === 'dev-user';
       const customToken = await adminAuth.createCustomToken(telegramId, {
         telegram_id: telegramId,
+        admin: isAdmin
       })
 
       return NextResponse.json({ ok: true, userId: telegramId, token: customToken })
@@ -147,8 +149,10 @@ export async function POST(req: NextRequest) {
       `• Status: ${snapshot.exists ? 'Login Kembali' : 'Registrasi Baru'}`
     )
 
+    const isAdmin = process.env.NEXT_PUBLIC_ADMIN_IDS?.split(',').includes(telegramId) || false;
     const customToken = await adminAuth.createCustomToken(telegramId, {
       telegram_id: telegramId,
+      admin: isAdmin
     })
 
     return NextResponse.json({ ok: true, userId: telegramId, token: customToken })

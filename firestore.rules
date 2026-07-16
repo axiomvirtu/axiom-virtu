@@ -4,6 +4,9 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
 
     match /users/{userId} {
       // Mengizinkan admin yang sudah login untuk membaca jumlah pengguna
@@ -12,17 +15,18 @@ service cloud.firestore {
 
     match /asset_catalogs/{document=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /prices/{document=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /{document=**} {
       // Global config atau koleksi lain yang perlu dibaca/ditulis Admin
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }

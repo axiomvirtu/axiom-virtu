@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTonConnect } from '@/hooks/useTonConnect'
-// import removed as we use native TON payment based on USDT value
+import { beginCell } from '@ton/core'
 import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { Header } from './components/Header'
@@ -242,19 +242,49 @@ export default function Dashboard() {
       const nanoTonAmount = BigInt(Math.floor(amountTon * 1e9)).toString()
       
       // 4. Bangun struktur transaksi TonConnect (Native TON Transfer)
+      const orderId = `VIRT-${Date.now().toString().slice(-6)}-${item.id.slice(0, 4)}`
+      const body = beginCell()
+        .storeUint(0, 32)
+        .storeStringTail(orderId)
+        .endCell()
+      const payloadBase64 = body.toBoc().toString("base64")
+
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 60 * 5, // 5 menit expired
         messages: [
           {
             address: adminWallet, // Dikirim langsung ke wallet Admin
-            amount: nanoTonAmount // Jumlah TON yang setara dengan USDT
+            amount: nanoTonAmount, // Jumlah TON yang setara dengan USDT
+            payload: payloadBase64
           }
         ]
       }
 
-      // 4. Kirim ke wallet untuk dikonfirmasi
+      // 5. Kirim ke wallet untuk dikonfirmasi
+      setCountdown(15) // Beri waktu countdown lebih lama untuk verifikasi
       const result = await sendTransaction(transaction)
-      console.log('Transaksi sukses dikirim!', result)
+      
+      if (!result) {
+        throw new Error('Transaksi dibatalkan')
+      }
+
+      // 6. Verifikasi ke Backend
+      console.log('Memverifikasi transaksi ke blockchain...')
+      const verifyRes = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          amountTon: amountTon,
+          adminWallet
+        })
+      });
+
+      if (!verifyRes.ok) {
+        throw new Error('Verifikasi gagal, transaksi tidak ditemukan di blockchain.')
+      }
+
+      console.log('Transaksi sukses diverifikasi oleh server!')
       setBuyResult('success')
 
     } catch (err: any) {
