@@ -73,7 +73,8 @@ export default function AdminCatalogPage() {
       return
     }
 
-    const isAdmin = process.env.NEXT_PUBLIC_ADMIN_IDS?.split(',').includes(user?.id?.toString() || '') || isDevBypass;
+    const adminIds = process.env.NEXT_PUBLIC_ADMIN_IDS || '';
+    const isAdmin = adminIds.split(',').includes(user?.id?.toString() || '') || isDevBypass;
     if (isAuthenticated && !isAdmin) {
       router.replace('/')
       return
