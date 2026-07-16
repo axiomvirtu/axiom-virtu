@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [buyResult, setBuyResult] = useState<'success' | 'fail' | null>(null)
+  const [testModalData, setTestModalData] = useState<{ amountUsdt: number, tonPrice: number, amountTon: number } | null>(null)
 
   const connectedWallet = walletAddress ?? dbUser?.wallet_address ?? null
   const isDevBypass = !isTelegram && process.env.NODE_ENV === 'development'
@@ -231,8 +232,8 @@ export default function Dashboard() {
       
       // [MODE TESTING] Jika tidak ada wallet yang terkoneksi
       if (!connectedWallet) {
-        alert(`[TESTING MODE] Simulasi Sukses!\n\nHarga Paket: ${amountUsdt} USDT\nHarga 1 TON saat ini: $${tonPrice.toFixed(2)}\nTagihan Terkonversi: ${amountTon.toFixed(4)} TON\n\n(Fitur wallet sedang di-bypass untuk testing)`);
-        setBuyResult('success');
+        setTestModalData({ amountUsdt, tonPrice, amountTon });
+        setBuyModalOpen(false);
         setCountdown(0);
         return;
       }
@@ -422,6 +423,44 @@ export default function Dashboard() {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Test Mode Modal */}
+      {testModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0a0a0c] border border-[#7F00FF]/50 rounded-[32px] p-8 max-w-sm w-full shadow-[0_0_40px_rgba(127,0,255,0.2)] relative overflow-hidden flex flex-col">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-[#7F00FF]"></div>
+            
+            <h3 className="text-xl font-black text-white mb-2 flex items-center justify-center tracking-widest uppercase drop-shadow-[0_0_8px_rgba(176,38,255,0.8)]">
+              <span className="text-cyan-400 mr-2">🧪</span> Mode Simulasi
+            </h3>
+            <p className="text-cyan-400/80 text-xs mb-6 tracking-wide text-center uppercase">Bypass dompet untuk testing</p>
+            
+            <div className="space-y-4 mb-8 bg-white/5 rounded-2xl p-5 border border-white/5 relative z-10">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Harga Paket</span>
+                <span className="text-white font-bold">{testModalData.amountUsdt} USDT</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">1 TON</span>
+                <span className="text-cyan-400 font-bold">${testModalData.tonPrice.toFixed(2)}</span>
+              </div>
+              <div className="w-full h-px bg-white/10 my-1"></div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-300 text-xs font-bold uppercase tracking-wider">Tagihan (TON)</span>
+                <span className="text-[#b026ff] font-black text-lg drop-shadow-[0_0_5px_rgba(176,38,255,0.5)]">{testModalData.amountTon.toFixed(4)} TON</span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setTestModalData(null)}
+              className="w-full bg-gradient-to-r from-[#7F00FF] to-cyan-500 text-white font-bold tracking-widest text-xs uppercase px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_0_15px_rgba(127,0,255,0.4)] relative z-10"
+            >
+              SELESAI
+            </button>
           </div>
         </div>
       )}
