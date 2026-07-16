@@ -202,7 +202,7 @@ export default function Dashboard() {
     }
 
     const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS
-    if (!adminWallet) {
+    if (!adminWallet && connectedWallet) {
       alert('Alamat wallet Admin belum diatur (NEXT_PUBLIC_ADMIN_WALLET_ADDRESS)')
       return
     }
@@ -214,8 +214,8 @@ export default function Dashboard() {
     try {
       const amountUsdt = item.capital_min
 
-      // 1. Fetch live TON price in USDT
-      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT')
+      // 1. Fetch live TON price in USDT via Internal API (Bypass CORS)
+      const response = await fetch('/api/ton-price')
       if (!response.ok) {
         throw new Error('Gagal mengambil harga pasar TON.')
       }
