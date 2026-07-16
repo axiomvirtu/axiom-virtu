@@ -58,7 +58,7 @@ function formatFirestoreDate(val: unknown): string {
 }
 
 export default function AdminCatalogPage() {
-  const { isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
+  const { user, isReady, firebaseReady, isAuthenticated, isTelegram } = useTelegramContext()
   const router = useRouter()
   const [catalogs, setCatalogs] = useState<AssetCatalogRow[]>([])
   const [loading, setLoading] = useState(true)
