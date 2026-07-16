@@ -198,8 +198,7 @@ export default function Dashboard() {
 
   const handleBuyTicket = async (item: AssetCatalogRow) => {
     if (!connectedWallet) {
-      alert('Silakan hubungkan wallet TON (Tonkeeper) terlebih dahulu!')
-      return
+      console.log('Mode Testing: Wallet belum terkoneksi, simulasi diaktifkan.');
     }
 
     const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS
@@ -229,6 +228,14 @@ export default function Dashboard() {
 
       // 2. Calculate TON amount
       const amountTon = amountUsdt / tonPrice
+      
+      // [MODE TESTING] Jika tidak ada wallet yang terkoneksi
+      if (!connectedWallet) {
+        alert(\`[TESTING MODE] Simulasi Sukses!\\n\\nHarga Paket: \${amountUsdt} USDT\\nHarga 1 TON saat ini: $\${tonPrice.toFixed(2)}\\nTagihan Terkonversi: \${amountTon.toFixed(4)} TON\\n\\n(Fitur wallet sedang di-bypass untuk testing)\`);
+        setBuyResult('success');
+        setCountdown(0);
+        return;
+      }
       
       // 3. Convert to nanoTON (1 TON = 1,000,000,000 nanoTON)
       const nanoTonAmount = BigInt(Math.floor(amountTon * 1e9)).toString()
