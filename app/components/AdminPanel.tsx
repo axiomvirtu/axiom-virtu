@@ -1867,10 +1867,10 @@ export const AdminPanel: React.FC = () => {
         const filteredRecords = tradeRecords.filter((rec) => {
           const matchSearch =
             !marketHistorySearch ||
-            rec.assetName.toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
-            rec.sellerName.toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
-            rec.buyerName.toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
-            rec.id.toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
+            (rec.assetName || '').toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
+            (rec.sellerName || '').toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
+            (rec.buyerName || '').toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
+            (rec.id || '').toLowerCase().includes(marketHistorySearch.toLowerCase()) ||
             (rec.notes && rec.notes.toLowerCase().includes(marketHistorySearch.toLowerCase()));
 
           const matchAsset = marketHistoryAssetFilter === 'ALL' || rec.assetId === marketHistoryAssetFilter;
