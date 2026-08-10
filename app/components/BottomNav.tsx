@@ -38,7 +38,7 @@ export const BottomNav: React.FC = () => {
     return null;
   }
 
-  const handleRestrictedTabClick = (tabName: string) => {
+  const handleRestrictedTabClick = (tabName: any) => {
     if (isNewUserRestricted) {
       addNotification({
         type: 'SYSTEM',
@@ -50,7 +50,7 @@ export const BottomNav: React.FC = () => {
       setIsMoreOpen(false);
       return;
     }
-    setActiveTab(tabName);
+    setActiveTab(tabName as any);
     setIsMoreOpen(false);
   };
 
