@@ -370,12 +370,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [giveawayParticipants, setGiveawayParticipants] = useState<string[]>(['usr_me', 'u_101', 'u_102', 'u_103', 'u_105']);
 
   const [giveawaySchedule, setGiveawaySchedule] = useState<GiveawayScheduleConfig>(() => {
-    const saved = localStorage.getItem('axiom_giveaway_schedule');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('axiom_giveaway_schedule');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          // ignore
+        }
       }
     }
     const now = new Date();
