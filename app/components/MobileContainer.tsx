@@ -68,10 +68,11 @@ export const MobileContainer: React.FC = () => {
       if (tg) {
         tg.ready();
         tg.expand();
-        if (typeof tg.setHeaderColor === 'function') {
+        const isAtLeast61 = typeof tg.isVersionAtLeast === 'function' ? tg.isVersionAtLeast('6.1') : false;
+        if (isAtLeast61 && typeof tg.setHeaderColor === 'function') {
           tg.setHeaderColor('#020617');
         }
-        if (typeof tg.setBackgroundColor === 'function') {
+        if (isAtLeast61 && typeof tg.setBackgroundColor === 'function') {
           tg.setBackgroundColor('#020617');
         }
       }
