@@ -26,8 +26,8 @@ export const AdminAgentView: React.FC = () => {
     users = [],
     exchangeRequests = [],
     assets: digitalAssets = [],
-    schedules = [],
-    topUpPaymentConfig = {},
+    schedules = {} as ScheduleConfig,
+    topUpPaymentConfig = {} as TopUpPaymentConfig,
     supportTickets = [],
     giveawayPrizes = [],
     tradeRecords = [],
@@ -56,7 +56,6 @@ Silakan klik **"Jalankan Auditing Sistem Lengkap"** di bawah atau pilih preset p
     const safeUsers = users || [];
     const safeRequests = exchangeRequests || [];
     const safeAssets = digitalAssets || [];
-    const safeSchedules = schedules || [];
     const safeSupport = supportTickets || [];
     const safePrizes = giveawayPrizes || [];
     const safeTrades = tradeRecords || [];
@@ -81,8 +80,8 @@ Silakan klik **"Jalankan Auditing Sistem Lengkap"** di bawah atau pilih preset p
       },
       secondaryMarketAndAssets: {
         totalDigitalAssets: safeAssets.length,
-        totalActiveStocks: safeAssets.reduce((sum, a) => sum + (a.totalStock || 0), 0),
-        activeSchedules: safeSchedules.filter((s) => s.status === 'ACTIVE').length,
+        totalActiveStocks: safeAssets.reduce((sum, a) => sum + (a.stockUnits || 1), 0),
+        activeSchedules: schedules ? 1 : 0,
       },
       supportAndGiveaway: {
         openSupportTickets: safeSupport.filter((t) => t.status === 'OPEN').length,
@@ -259,7 +258,7 @@ Silakan klik **"Jalankan Auditing Sistem Lengkap"** di bawah atau pilih preset p
           <div>
             <div className="text-[10px] text-slate-400 font-bold uppercase">Aset Digital &amp; Stock</div>
             <div className="text-sm font-black text-white">
-              {(digitalAssets || []).length} Aset ({(digitalAssets || []).reduce((s, a) => s + (a.totalStock || 0), 0)} Stock)
+              {(digitalAssets || []).length} Aset ({(digitalAssets || []).reduce((s, a) => s + (a.stockUnits || 1), 0)} Stock)
             </div>
           </div>
         </div>
