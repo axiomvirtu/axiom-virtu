@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# subfolder axiom-virtu ignores
+axiom-virtu/node_modules/
+axiom-virtu/dist/
+axiom-virtu/.env*
+

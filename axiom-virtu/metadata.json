@@ -1,0 +1,6 @@
+{
+  "name": "Axiom Virtu",
+  "description": "Aplikasi Mobile Cyberpunk P2P Digital Asset Trading, Dompet Kripto USDT, Sistem Tiket, Exchange IDR/USDT & Autentikasi Keamanan End-to-End",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
