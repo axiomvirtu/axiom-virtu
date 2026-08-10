@@ -852,7 +852,7 @@ export const AdminPanel: React.FC = () => {
             <div className="space-y-1 relative z-10">
               <div className="text-[9px] text-blue-300 font-extrabold uppercase tracking-wider font-mono">ATURAN JAM BIDDING</div>
               <div className="text-xs font-black text-blue-300 flex items-center gap-1">
-                <span>{schedules.length} Sesi Bidding</span>
+                <span>{schedules ? 1 : 0} Sesi Bidding</span>
               </div>
             </div>
             <Clock className="w-5 h-5 text-blue-400 shrink-0 animate-bounce group-hover:scale-110 transition-transform duration-300 relative z-10" />

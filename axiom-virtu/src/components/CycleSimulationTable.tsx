@@ -7,7 +7,7 @@ interface CycleSimulationTableProps {
   profitPercent: number;
   minPrice?: number;
   maxPrice?: number;
-  maxPriceAction?: 'SPLIT_SAME_TIER' | 'UPGRADE_NEXT_TIER';
+  maxPriceAction?: 'SPLIT_SAME_TIER' | 'UPGRADE_NEXT_TIER' | 'AUTO_SMART_ROUTE';
   nextTierName?: string;
   compact?: boolean;
 }
