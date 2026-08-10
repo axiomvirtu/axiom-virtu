@@ -40,6 +40,10 @@ export interface UserProfile {
     accountHolder: string;
   };
   createdAt?: string;
+  avatar?: string;
+  photoUrl?: string;
+  biometricEnabled?: boolean;
+  phoneNumber?: string;
 }
 
 export type AssetTheme = 'CYBERPUNK' | 'SYNTHWAVE' | 'QUANTUM' | 'BIOTECH' | 'NEON_MATRIX';
@@ -60,6 +64,7 @@ export interface DigitalAsset {
   sellerPhone: string;
   sellerWalletAddress?: string;
   maxGrabbers: number; // Default 5 persons, editable by admin
+  maxGrabbersAllowed?: number;
   bookedUsers: string[]; // List of user IDs who booked with ticket
   currentWinnerId?: string;
   status: 'AVAILABLE' | 'BOOKED_WAITING' | 'GRABBED_PAYMENT_PENDING' | 'ACTIVE_HOLDING' | 'EXPIRED' | 'BURNED';
@@ -70,6 +75,7 @@ export interface DigitalAsset {
   isConfirmedBySeller?: boolean;
   createdAt: number;
   stockUnits?: number; // Available circulating stock units editable by admin
+  totalStock?: number;
   maxStockCapacity?: number; // Maximum stock limit capacity before oversupply warning (e.g. 15 or 20)
   ticketBookingTarget?: number; // Target ticket volume for booking demand indicator (e.g. 15 or 20)
   // Action when reaching Max Price (harga tertinggi)
