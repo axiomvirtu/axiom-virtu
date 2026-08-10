@@ -31,10 +31,10 @@ export const BottomNav: React.FC = () => {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const unreadNotifs = notifications.filter((n) => !n.read).length;
-  const isNewUserRestricted = currentUser.role === 'user' && !currentUser.isDepositDone;
+  const isNewUserRestricted = (currentUser.role as any) === 'user' && !currentUser.isDepositDone;
 
   // Ringkas mode for Admin: Hide bottom navigation bar completely in admin mode
-  if (currentUser.role === 'admin' || activeTab === 'admin') {
+  if ((currentUser.role as any) === 'admin' || (activeTab as string) === 'admin') {
     return null;
   }
 
@@ -129,7 +129,7 @@ export const BottomNav: React.FC = () => {
           </button>
 
           {/* Admin Panel (If Role is Admin) */}
-          {currentUser.role === 'admin' && (
+          {(currentUser.role as any) === 'admin' && (
             <button
               onClick={() => {
                 setActiveTab('admin');
@@ -259,7 +259,7 @@ export const BottomNav: React.FC = () => {
                 setActiveTab('wallet');
                 setIsMoreOpen(false);
               }}
-              title={currentUser.role === 'admin' ? 'Histori Deposit Member' : 'Undian Hadiah'}
+              title={(currentUser.role as any) === 'admin' ? 'Histori Deposit Member' : 'Undian Hadiah'}
               className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl sm:rounded-2xl transition-all duration-300 relative group ${
                 activeTab === 'wallet'
                   ? 'bg-gradient-to-b from-fuchsia-500/20 to-fuchsia-500/5 text-fuchsia-300 border border-fuchsia-400/50 shadow-[0_0_15px_rgba(217,70,239,0.4)] scale-105'
@@ -267,7 +267,7 @@ export const BottomNav: React.FC = () => {
               }`}
             >
               <div className="relative">
-                {currentUser.role === 'admin' ? (
+                {(currentUser.role as any) === 'admin' ? (
                   <Wallet className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${
                     activeTab === 'wallet' ? 'text-fuchsia-400 drop-shadow-[0_0_8px_rgba(217,70,239,0.8)]' : ''
                   }`} />
@@ -283,7 +283,7 @@ export const BottomNav: React.FC = () => {
               <span className={`text-[9px] sm:text-[10px] font-bold mt-1 tracking-tight text-center leading-none ${
                 activeTab === 'wallet' ? 'text-fuchsia-300 drop-shadow-[0_0_5px_rgba(217,70,239,0.5)]' : ''
               }`}>
-                {currentUser.role === 'admin' ? 'Histori Deposit' : 'Undian'}
+                {(currentUser.role as any) === 'admin' ? 'Histori Deposit' : 'Undian'}
               </span>
             </button>
 

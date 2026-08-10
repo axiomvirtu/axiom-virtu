@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | string;
 
 export interface TelegramWebAppUser {
   id: number | string;
