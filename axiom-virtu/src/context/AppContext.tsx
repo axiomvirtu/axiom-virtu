@@ -2179,7 +2179,7 @@ Alasan: ${reason}`,
     if (!giveawaySchedule.isAutoDrawEnabled || !giveawaySchedule.scheduledTime) return;
 
     const checkAutoDraw = () => {
-      if (Date.now() >= giveawaySchedule.scheduledTime && giveawayWinners.length === 0) {
+      if (giveawaySchedule.scheduledTime && Date.now() >= giveawaySchedule.scheduledTime && giveawayWinners.length === 0) {
         const totalPrizeQty = giveawayPrizes.reduce((sum, p) => sum + (p.quantity || 1), 0);
         const winnersToDraw = giveawaySchedule.scheduledWinnerCount > 0 
           ? giveawaySchedule.scheduledWinnerCount 

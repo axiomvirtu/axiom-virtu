@@ -106,13 +106,17 @@ export interface ScheduleConfig {
 export interface UsdtMutation {
   id: string;
   userId: string;
-  type: 'DEPOSIT_IN' | 'P2P_SELL_IN' | 'EXCHANGE_BUY_IN' | 'ADMIN_CREDIT_IN' | 'PROFIT_REWARD_IN';
+  type: 'DEPOSIT_IN' | 'P2P_SELL_IN' | 'EXCHANGE_BUY_IN' | 'ADMIN_CREDIT_IN' | 'PROFIT_REWARD_IN' | 'USER_REGISTER' | string;
   amountUsdt: number;
   amountIdr?: number;
   description: string;
+  title?: string;
+  amount?: number;
+  currency?: string;
+  userName?: string;
   txHash?: string;
   senderInfo?: string;
-  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED' | 'SUCCESS' | string;
   timestamp: number;
 }
 

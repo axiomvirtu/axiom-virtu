@@ -355,7 +355,7 @@ export const WalletView: React.FC = () => {
   interface UnifiedTx {
     id: string;
     timestamp: number;
-    category: 'USDT' | 'TICKET' | 'ASSET';
+    category: 'USDT' | 'TICKET' | 'ASSET' | 'TIKET' | string;
     badgeLabel: string;
     badgeStyle: string;
     title: string;
@@ -364,7 +364,7 @@ export const WalletView: React.FC = () => {
     ticketsAmount?: number;
     amountIdr?: number;
     isPositive?: boolean;
-    status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
+    status: 'COMPLETED' | 'PENDING' | 'CANCELLED' | 'SUCCESS' | string;
     txHash?: string;
     icon: React.ReactNode;
   }

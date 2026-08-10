@@ -166,6 +166,7 @@ export const LoginScreen: React.FC = () => {
       type: 'USER_REGISTER',
       title: 'Pendaftaran Otomatis Telegram Mini App',
       description: `User ${displayName} (${handle}) terdaftar via window.Telegram.WebApp.initData`,
+      amountUsdt: 0,
       amount: 0,
       currency: 'USD',
       userId: newTgUser.id,

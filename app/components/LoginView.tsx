@@ -151,6 +151,7 @@ export const LoginView: React.FC = () => {
       type: 'USER_REGISTER',
       title: 'Koneksi Telegram Baru',
       description: `Akun ${displayName} (${cleanHandle}) berhasil dikoneksikan via Telegram.`,
+      amountUsdt: 0,
       amount: 0,
       currency: 'USD',
       userId: newUser.id,
