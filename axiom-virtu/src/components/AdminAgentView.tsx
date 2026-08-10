@@ -25,7 +25,7 @@ export const AdminAgentView: React.FC = () => {
   const {
     users = [],
     exchangeRequests = [],
-    digitalAssets = [],
+    assets: digitalAssets = [],
     schedules = [],
     topUpPaymentConfig = {},
     supportTickets = [],
