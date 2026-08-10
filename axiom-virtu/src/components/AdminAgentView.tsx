@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { ScheduleConfig, TopUpPaymentConfig } from '../types';
 import {
   Bot,
   Sparkles,
